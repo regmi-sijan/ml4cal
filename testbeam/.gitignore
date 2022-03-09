@@ -1,0 +1,12 @@
+*.npy
+*.npz
+*.png
+*.csv
+*.root
+/docs/
+data
+data/*
+tf
+tf/*
+__pycache__
+__pycache__/*

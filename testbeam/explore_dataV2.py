@@ -67,7 +67,10 @@ nplot       = args.nplot
 channel     = args.channel
 verbose     = args.verbose
 
-if(verbose): print(f'''Python {platform.python_version_tuple()[0]}.{platform.python_version_tuple()[1]}.{platform.python_version_tuple()[2]}''')
+if(verbose):
+    python_info = platform.python_version_tuple()
+    print(f'''Python {python_info[0]}.{python_info[1]}.{python_info[2]}''')
+    exit(0)
 
 if(infile==''):
     print('Please specify a valid input filename (input)')

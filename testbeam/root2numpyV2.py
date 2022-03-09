@@ -13,92 +13,58 @@ so by default we exclude it
 
 
 '''
-##################################
+###################################
 import uproot
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
-##################################
 
-def branch2array(dir, b, N):
-    '''
-    Returns a numpy array based on the requested branch in the ROOT file.
-    Relies on the specific format of the branch name in the files of this type.
-    '''
-    
-    if(b==31):
-        branch = dir['chnlnumber']
-    else:
-        branch = dir[f'''electron_adc_counts_{b}''']
-    
-    return branch.array(library='np', entry_stop=N)
 
-def channel2array(dir, N):
-    '''
-    Converts a branch with the channel number to an array
-    '''
-    branch = dir['chnlnumber']
-    return branch.array(library='np', entry_stop=N)
-#####################################
+###################################
 
 parser = argparse.ArgumentParser()
-
-parser.add_argument("-c", "--csvout",   type=str,
-                    help="If specified, name of the CSV file to output the data sample to and exit", default='')
 
 parser.add_argument("-i", "--infile",   type=str,   help="Input ROOT file",     default='')
 parser.add_argument("-o", "--outfile",  type=str,   help="Output numpy file",   default='')
 
 parser.add_argument("-N", "--entries",  type=int,   help="Number of samples",   default=0)
-parser.add_argument("-L", "--bins",     type=int,   help="Number of bins",      default=31)
 
 parser.add_argument("-v", "--verbose",  action='store_true',    help="Verbose mode")
 parser.add_argument("-z", "--zip",      action='store_true',    help="Store compressed")
 
-################################################################
+
+###################################
 args        = parser.parse_args()
 
 infile      = args.infile
 outfile     = args.outfile
 
 entries     = args.entries
-L           = args.bins
-
 verbose     = args.verbose
 
-if(infile==''):
-    print('Please specify a valid ROOT filename (input)')
-    exit(-1)
-
-if(outfile==''):
-    print('Please specify a valid numpy filename (output)')
+if(infile=='' or outfile==''):
+    print('Please specify valid input and output file names')
     exit(-1)
 
 file    = uproot.open(infile)
 dir     = file['T;1']
 
 Nentries = dir['electron_adc_counts'].num_entries
-
-if entries==0:
-    N = Nentries
-else:
-    N = min(entries,Nentries)
+N=Nentries if entries==0 else min(entries,Nentries)
 
 if verbose: print(f'''Will process {N} entries''')
 
 branch = dir['electron_adc_counts']
-
 X = branch.array(library='np', entry_stop=N)
 
 if verbose : print(f'''Created an array: {X.shape}''')
 
-
-if verbose : print(f'''Saving to file {outfile} ''')
-
 with open(outfile, 'wb') as f:
     if(args.zip):
+        if verbose : print(f'''Saving to compressed file {outfile} ''')
         np.savez_compressed(f, X=X)
     else:
+        if verbose : print(f'''Saving to uncompressed file {outfile} ''')
         np.save(f, X)
 
 f.close()
