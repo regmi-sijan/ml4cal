@@ -70,7 +70,6 @@ verbose     = args.verbose
 if(verbose):
     python_info = platform.python_version_tuple()
     print(f'''Python {python_info[0]}.{python_info[1]}.{python_info[2]}''')
-    exit(0)
 
 if(infile==''):
     print('Please specify a valid input filename (input)')
