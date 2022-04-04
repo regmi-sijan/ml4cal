@@ -32,6 +32,7 @@ parser.add_argument("-N", "--entries",  type=int,   help="Number of samples",   
 parser.add_argument("-v", "--verbose",  action='store_true',    help="Verbose mode")
 parser.add_argument("-z", "--zip",      action='store_true',    help="Store compressed")
 
+parser.add_argument("-x", "--experimental",      action='store_true',    help="Experimental Mode")
 
 ###################################
 args        = parser.parse_args()
@@ -42,22 +43,40 @@ outfile     = args.outfile
 entries     = args.entries
 verbose     = args.verbose
 
+xpr         = args.experimental
+
+
+# Options for names in the tree:
+
+treename    = 'T;1'
+branchname  = 'electron_adc_counts'
+
+if xpr:
+    treename    = 'trainingtree'
+    branchname  = 'waveform'
+
 if(infile=='' or outfile==''):
     print('Please specify valid input and output file names')
     exit(-1)
 
 file    = uproot.open(infile)
-dir     = file['T;1']
 
-Nentries = dir['electron_adc_counts'].num_entries
+if verbose: print(f'''Opened file {infile}, will use tree {treename}''')
+# dir     = file['T;1']
+dir     = file[treename]
+
+branch  = dir[branchname]
+
+Nentries = branch.num_entries
 N=Nentries if entries==0 else min(entries,Nentries)
 
 if verbose: print(f'''Will process {N} entries''')
 
-branch = dir['electron_adc_counts']
 X = branch.array(library='np', entry_stop=N)
 
 if verbose : print(f'''Created an array: {X.shape}''')
+
+exit(0)
 
 with open(outfile, 'wb') as f:
     if(args.zip):
