@@ -11,10 +11,18 @@ Branch name is 'electron_adc_counts'.
 The 32nd time bin of the waveform always contains -999 and is useless,
 so by default we exclude it
 
+Experimenting with uproot3:
+
+import uproot3
+import numpy as np
+
+f = uproot3.recreate("moo.root")
+f['test']=uproot3.newtree({'branch': "int32"})
+f['test'].extend({'branch': np.array([1,2,3])})
 
 '''
 ###################################
-import uproot
+import uproot3
 import numpy as np
 import matplotlib.pyplot as plt
 import argparse
@@ -46,10 +54,6 @@ verbose     = args.verbose
 xpr         = args.experimental
 
 
-if(infile=='' or outfile==''):
-    print('Please specify valid input and output file names')
-    exit(-1)
-
 # Options for names in the tree:
 
 treename    = 'T;1'
@@ -59,25 +63,39 @@ if xpr:
     treename    = 'trainingtree'
     branchname  = 'waveform'
 
-# Boilerplate for updating the existing file - 
-#    file = uproot.update(infile)
-#    file["mytree"] = {"branch1": np.array([1,2,3]), "branch2": np.arange(3)*1.1}
-#    exit(0)
+if(infile=='' or outfile==''):
+    print('Please specify valid input and output file names')
+    exit(-1)
 
-
-file    = uproot.open(infile)
+file    = uproot3.open(infile)
 
 if verbose: print(f'''Opened file {infile}, will use tree {treename}''')
+
 dir     = file[treename]
 branch  = dir[branchname]
 
-Nentries = branch.num_entries
+Nentries = branch.numentries
+
+
 N=Nentries if entries==0 else min(entries,Nentries)
 
 if verbose: print(f'''Will process {N} entries''')
 
-X = branch.array(library='np', entry_stop=N)
+X = branch.array()
+
+
 if verbose : print(f'''Created an array: {X.shape}''')
+
+dir.extend({'branch': np.array([1,2,3])})
+exit(0)
+
+f = uproot.recreate(outfile)
+
+f['test']=uproot.newtree({'branch': np.array([1,2,3])})
+
+# dir.extend({'branch': np.array([1,2,3])})
+
+exit(0)
 
 with open(outfile, 'wb') as f:
     if(args.zip):
