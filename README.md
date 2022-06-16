@@ -5,10 +5,13 @@
 This repository contains code and other materials
 related to applying _Machine Learning_ techniques
 to signal feature extraction, for the sPHENIX calorimeters.
+
 At present, we are using _Keras_ (which runs on top of TensorFlow)
 and work entirely with Python.
 
-The repository combines components from two previous locations.
+
+Functionality has been tested with service-type deployments
+based on _nginx_ and _gunicorn_.
 
 ## Data
 
