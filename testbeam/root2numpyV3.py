@@ -43,6 +43,10 @@ parser.add_argument("-o", "--outfile",  type=str,   help="Output numpy file",   
 parser.add_argument("-t", "--tmplfile", type=str,   help="Fit template file",   default='template.csv')
 
 parser.add_argument("-N", "--entries",  type=int,   help="Number of samples",   default=0)
+parser.add_argument("-c", "--channel",  type=int,   help="Channel",             default=0)
+
+
+parser.add_argument("-r", "--r2",       type=float,  help="R2 threshold",       default=0.0)
 
 parser.add_argument("-v", "--verbose",  action='store_true',    help="Verbose mode")
 parser.add_argument("-z", "--zip",      action='store_true',    help="Store compressed")
@@ -62,6 +66,8 @@ verbose     = args.verbose
 
 treename    = 'trainingtree'
 branchname  = 'waveform'
+
+channel     = args.channel
 
 if(infile==''):
     print('Please specify a valid input file name')
@@ -98,41 +104,62 @@ X = branch.array()
 dims = X.shape
 if verbose : print(f'''Read an array: {dims}''')
 
-Y = np.empty([N, 64, 34], dtype = float)
-
-if verbose: print(f'''Output array shape: {Y.shape}''')
+# Y = np.empty([N, 64, 34], dtype = float)
+# if verbose: print(f'''Output array shape: {Y.shape}''')
 
 x  = np.linspace(0, 31, 31, endpoint=False) # print(x)
 
+# channels = np.linspace(0,63,64)
+# print(np.reshape(channels, (-1,8)))
+# exit(0)
+
+# good = np.zeros(9, dtype=np.int32)
+
+selected = (18, 19, 20, 26, 27, 28, 34, 35, 36)
+
+first           = True
+output_array    = None
+
 for i in range(N): # loop over the data sample
-        frame = X[i]
-        for channel in range(64):
-            wave = frame[channel][0:31]
-            # print(wave)
-            popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[500.0, 7.0, 1500.0])
-            #if(popt[0]>100.): print(popt)
+    if (verbose and (i %100)==0): print(i)
+    frame = X[i]
+    wave = frame[channel][0:31]  # print(wave)
+    popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[500.0, 7.0, 1500.0])
 
-            # residual sum of squares
-            ss_res = np.sum((wave - tempfit(x, *popt)) ** 2)
+    # residual sum of squares
+    ss_res = np.sum((wave - tempfit(x, *popt)) ** 2)
 
-            # total sum of squares
-            ss_tot = np.sum((wave - np.mean(wave)) ** 2)
+    # total sum of squares
+    ss_tot = np.sum((wave - np.mean(wave)) ** 2)
 
-            # r-squared
-            r2 = 1 - (ss_res / ss_tot)
-            if args.debug: print(str(popt[0])+', '+str(r2))
+    # r-squared
+    r2 = 1 - (ss_res / ss_tot)
+    if args.debug: print(str(popt[0])+', '+str(r2))
 
+    if r2<args.r2: continue
 
+    # adding the "Y" vector: origin, peak value, pedestal
+    result      = np.array(popt)
+    appended    = np.append(wave, result)
+
+    if first:
+        output_array = np.array([appended])
+        first = False
+    else:
+        output_array = np.append(output_array,[appended], axis=0)
+
+if verbose: print(f'''Created an array: {output_array.shape}''')
+# print(np.reshape(output_array, (-1,34)))
 
 if(outfile == ''): exit(0)
 
 with open(outfile, 'wb') as f:
     if(args.zip):
         if verbose : print(f'''Saving to compressed file {outfile} ''')
-        np.savez_compressed(f, X=X)
+        np.savez_compressed(f, output_array)
     else:
         if verbose : print(f'''Saving to uncompressed file {outfile} ''')
-        np.save(f, X)
+        np.save(f, output_array)
 
 f.close()
 
