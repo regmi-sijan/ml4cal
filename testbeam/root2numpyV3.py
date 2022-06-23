@@ -104,12 +104,12 @@ X = branch.array()
 dims = X.shape
 if verbose : print(f'''Read an array: {dims}''')
 
-# Y = np.empty([N, 64, 34], dtype = float)
-# if verbose: print(f'''Output array shape: {Y.shape}''')
-
 x  = np.linspace(0, 31, 31, endpoint=False) # print(x)
 
-# channels = np.linspace(0,63,64)
+
+# Temp code dev area:
+# Y = np.empty([N, 64, 34], dtype = float)
+# if verbose: print(f'''Output array shape: {Y.shape}''')# channels = np.linspace(0,63,64)
 # print(np.reshape(channels, (-1,8)))
 # exit(0)
 
@@ -125,9 +125,10 @@ for i in range(N): # loop over the data sample
     frame = X[i]
     wave = frame[channel][0:31]  # print(wave)
     popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[500.0, 7.0, 1500.0])
+    fit  = tempfit(x, *popt)
 
     # residual sum of squares
-    ss_res = np.sum((wave - tempfit(x, *popt)) ** 2)
+    ss_res = np.sum((wave - fit) ** 2)
 
     # total sum of squares
     ss_tot = np.sum((wave - np.mean(wave)) ** 2)
@@ -138,9 +139,13 @@ for i in range(N): # loop over the data sample
 
     if r2<args.r2: continue
 
-    # adding the "Y" vector: origin, peak value, pedestal
+    buzz = np.std(wave-fit)
+
+    # adding the "Y" vector: origin, peak value, pedestal, buzz
     result      = np.array(popt)
-    appended    = np.append(wave, result)
+    appended    = np.append(wave, np.append(result, buzz))
+
+    # print(appended)
 
     if first:
         output_array = np.array([appended])
@@ -149,6 +154,7 @@ for i in range(N): # loop over the data sample
         output_array = np.append(output_array,[appended], axis=0)
 
 if verbose: print(f'''Created an array: {output_array.shape}''')
+
 # print(np.reshape(output_array, (-1,34)))
 
 if(outfile == ''): exit(0)
