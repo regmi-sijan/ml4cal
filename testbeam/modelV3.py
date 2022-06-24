@@ -9,11 +9,9 @@ import argparse
 from typing import Optional
 
 import numpy as np
-from numpy import loadtxt
 
 from keras.models import Sequential
 from keras.layers import Dense
-from keras.utils.vis_utils import plot_model
 
 from keras.regularizers import l1
 
@@ -31,10 +29,8 @@ def yes_or_no(question):
 parser = argparse.ArgumentParser()
 
 # I/O options
-parser.add_argument("-i", "--infile",   type=str,   help="Input file (csv)", default='')
+parser.add_argument("-i", "--infile",   type=str,   help="Input file", default='')
 parser.add_argument("-s", "--savefile", type=str,   help="Filename to save the model", default='')
-parser.add_argument("-p", "--plot",     type=str,   help="If specified, Name of the PNG file to plot the model to and exit", default='')
-
 
 # ML options
 parser.add_argument("-b", "--batch",    type=int,   help="Batch size",              default=10)
@@ -50,7 +46,6 @@ args    = parser.parse_args()
 
 infile  = args.infile
 save    = args.savefile
-plot    = args.plot
 
 # Learning
 batch   = args.batch
@@ -70,11 +65,16 @@ if infile == '':
 with open(infile, 'rb') as f: dataset = np.load(f)
 if verbose: print(f'''Read an array: {dataset.shape}''')
 
-L = len(dataset[0]) - 3 # three trailing numbers are "y"
+
+L = 31 # len(dataset[0]) - 3 or 4 # three or four trailing numbers are "y" (options)
 
 # Split into input (X) and output (y) variables
 X = dataset[:,0:L]
-y = dataset[:,(L):(L+3)] # the "y" vector: origin, peak value, pedestal
+y = dataset[:,(L):(L+3)] # the "y" vector: amplitude, time, pedestal
+
+#for i in range(3):
+#    print(y[i])
+#exit(0)
 
 # for i in range(0,4): print(X[i], '!', y[i])
 
@@ -82,11 +82,6 @@ y = dataset[:,(L):(L+3)] # the "y" vector: origin, peak value, pedestal
 model = Sequential()
 model.add(Dense(L, input_dim=L, activation='relu'))
 model.add(Dense(3, activation=act))
-
-if plot!='':
-    plot_model(model,   to_file=plot,    show_shapes=True,  show_dtype=True,    show_layer_names=True,
-    rankdir="TB",       expand_nested=True, dpi=96,  layer_range=None,)
-    exit(0)
 
 # Compile the Keras model
 model.compile(loss=loss, optimizer=opt, metrics=['accuracy'])

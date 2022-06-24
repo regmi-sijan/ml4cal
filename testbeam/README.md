@@ -21,3 +21,10 @@
  [56. 57. 58. 59. 60. 61. 62. 63.]]
 
 ```
+
+# TF Debug Level
+
+```bash
+# Change TF log level to remove CUDA and other warnings:
+export TF_CPP_MIN_LOG_LEVEL=3
+```
