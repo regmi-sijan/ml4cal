@@ -3,6 +3,12 @@
 # Load a model, a date file and compare the model's
 # results with the data
 
+
+###
+def tempfit(x, *par):
+    return par[0]*np.interp((x - par[1]), template[:,0], template[:,1]) + par[2]
+###
+
 import argparse
 
 import numpy as np
@@ -13,6 +19,9 @@ from matplotlib import colors
 
 from keras.models import Sequential, load_model
 from keras.models import load_model
+
+import scipy
+from   scipy.optimize import curve_fit
 
 import time
 
@@ -40,6 +49,11 @@ stats       = args.stats
 batch       = args.batch
 verbose     = args.verbose
 ################################################################
+
+
+template = loadtxt('template.csv', delimiter=',')
+
+if verb: print(f'''Template dimensions: {template.shape}''')
 
 if verb: print(('Will read data from file %s, will read the model from file %s') % (datafile, modelfile))
 
@@ -85,12 +99,38 @@ end = time.time()
 
 if verb: print("Inference - elapsed time:", end-start)
 
+
+x       = np.linspace(0, 31, 31, endpoint=False)
+N       = dataset.shape[0]
+fits    = [None] * N
+
+for i in range(N): # loop over the data sample
+    frame = X[i]
+    wave = frame[0:31]  # print(wave)
+    popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[500.0, 7.0, 1500.0])
+    fits[i]=popt
+    # fit  = tempfit(x, *popt)
+
+result = np.array(fits)
+
+print(answer.shape)
+print(result.shape)
+
+
 if stats:
     labels = ['amplitude', 'time', 'pedestal',]
     diff = answer - y
-    print('Average and Standard deviation values')
-    for i in range(0,3):
-        print(labels[i], np.average(diff[:,i]), np.std(diff[:,i]))
+
+    print('Average and Standard deviation values (ML)')
+    for i in range(0,3): print(labels[i], np.average(diff[:,i]), np.std(diff[:,i]))
+
+    diff = answer - result
+    print('Average and Standard deviation values (Fit)')
+    for i in range(0,3): print(labels[i], np.average(diff[:,i]), np.std(diff[:,i]))
+
+
+exit(0)
+
 
 if args.graphic:
     diff = answer - y
