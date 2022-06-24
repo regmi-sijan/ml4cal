@@ -46,7 +46,8 @@ parser.add_argument("-N", "--entries",  type=int,   help="Number of samples",   
 parser.add_argument("-c", "--channel",  type=int,   help="Channel",             default=0)
 
 
-parser.add_argument("-r", "--r2",       type=float,  help="R2 threshold",       default=0.0)
+parser.add_argument("-g", "--gain",     type=float, help="gain (guess",        default=500.0)
+parser.add_argument("-r", "--r2",       type=float, help="R2 threshold",       default=0.0)
 
 parser.add_argument("-v", "--verbose",  action='store_true',    help="Verbose mode")
 parser.add_argument("-z", "--zip",      action='store_true',    help="Store compressed")
@@ -68,6 +69,7 @@ treename    = 'trainingtree'
 branchname  = 'waveform'
 
 channel     = args.channel
+gain        = args.gain
 
 if(infile==''):
     print('Please specify a valid input file name')
@@ -124,7 +126,7 @@ for i in range(N): # loop over the data sample
     if (verbose and (i %100)==0): print(i)
     frame = X[i]
     wave = frame[channel][0:31]  # print(wave)
-    popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[500.0, 7.0, 1500.0])
+    popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[gain, 7.0, 1500.0])
     fit  = tempfit(x, *popt)
 
     # residual sum of squares

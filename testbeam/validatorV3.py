@@ -36,6 +36,9 @@ parser.add_argument("-v", "--verbose",      action='store_true',	help="Verbose m
 parser.add_argument("-s", "--stats",        action='store_true',	help="Calculate stats")
 
 parser.add_argument("-b", "--batch",        type=int,               help="Batch size for inference",        default=32)
+
+parser.add_argument("-a", "--amp",     type=float, help="gain (guess)",        default=500.0)
+
 # parser.add_argument("-T", "--timing",       action='store_true',	help="Time the model")
 
 ################################################################
@@ -48,6 +51,8 @@ stats       = args.stats
 
 batch       = args.batch
 verbose     = args.verbose
+
+gain        = args.amp
 ################################################################
 
 
@@ -107,7 +112,7 @@ fits    = [None] * N
 for i in range(N): # loop over the data sample
     frame = X[i]
     wave = frame[0:31]  # print(wave)
-    popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[500.0, 7.0, 1500.0])
+    popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[gain, 7.0, 1500.0])
     fits[i]=popt
     # fit  = tempfit(x, *popt)
 
