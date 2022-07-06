@@ -33,9 +33,9 @@ parser.add_argument("-G", "--graphicfile",  type=str,               help="Option
 
 parser.add_argument("-g", "--graphic",      action='store_true',	help="Display comparison graphic and exit")
 parser.add_argument("-v", "--verbose",      action='store_true',	help="Verbose mode")
-parser.add_argument("-s", "--stats",        action='store_true',	help="Calculate stats")
+parser.add_argument("-s", "--save",         type=str,	            help="If set, augment and save the original file", default='')
 
-parser.add_argument("-b", "--batch",        type=int,               help="Batch size for inference",        default=32)
+parser.add_argument("-b", "--batch",        type=int,               help="Batch size for inference", default=32)
 
 parser.add_argument("-a", "--amp",     type=float, help="gain (guess)",        default=500.0)
 
@@ -47,7 +47,7 @@ args    = parser.parse_args()
 datafile    = args.datafile
 modelfile   = args.modelfile
 verb        = args.verbose
-stats       = args.stats
+save        = args.save
 
 batch       = args.batch
 verbose     = args.verbose
@@ -76,7 +76,7 @@ start = time.time()
 
 with open(datafile, 'rb') as f: dataset = np.load(f)
 if verbose: print(f'''Read an array: {dataset.shape}''')
-L = 31 # len(dataset[0]) - 3 # the "y" vector: origin, peak value, pedestal
+L = 31 # len(dataset[0]) - 3 # the "y" vector: amplitude, time, pedestal
 
 # Split into input (X) and output (y) variables
 X = dataset[:,0:L]
@@ -103,39 +103,46 @@ end = time.time()
 
 
 if verb: print("Inference - elapsed time:", end-start)
+if verb: print(f'''Answer shape: {answer.shape}''')
 
+labels = ['amplitude', 'time', 'pedestal',]
+diff = answer - y
 
-x       = np.linspace(0, 31, 31, endpoint=False)
-N       = dataset.shape[0]
-fits    = [None] * N
+print('Average and Standard deviation values (ML)')
+for i in range(0,3): print(labels[i], np.average(diff[:,i]), np.std(diff[:,i]))
 
-for i in range(N): # loop over the data sample
-    frame = X[i]
-    wave = frame[0:31]  # print(wave)
-    popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[gain, 7.0, 1500.0])
-    fits[i]=popt
-    # fit  = tempfit(x, *popt)
+print('Average aplitude', np.average(y[:, 0]))
 
-result = np.array(fits)
+if (save==''):
+    if verb: print("No output file specified for the augmented data, will exit now...")
+    exit(0)
 
-print(answer.shape)
-print(result.shape)
+augmented = np.concatenate((dataset, answer),axis=1)
+if verb: print(f'''Augmented array shape: {augmented.shape}''')
 
-
-if stats:
-    labels = ['amplitude', 'time', 'pedestal',]
-    diff = answer - y
-
-    print('Average and Standard deviation values (ML)')
-    for i in range(0,3): print(labels[i], np.average(diff[:,i]), np.std(diff[:,i]))
-
-    diff = answer - result
-    print('Average and Standard deviation values (Fit)')
-    for i in range(0,3): print(labels[i], np.average(diff[:,i]), np.std(diff[:,i]))
-
+with open(save, 'wb') as f:
+    if verbose : print(f'''Saving to uncompressed file {save} ''')
+    np.save(f, augmented)
 
 exit(0)
 
+###########################################################
+
+# x       = np.linspace(0, 31, 31, endpoint=False)
+# N       = dataset.shape[0]
+
+# fits    = [None] * N
+
+# for i in range(N): # loop over the data sample
+    # frame = X[i]
+    # wave = frame[0:31]  # print(wave)
+    # popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[gain, 7.0, 1500.0])
+    # fits[i]=popt
+    # fit  = tempfit(x, *popt)
+
+    # diff = answer - result
+    # print('Average and Standard deviation values (Fit)')
+    # for i in range(0,3): print(labels[i], np.average(diff[:,i]), np.std(diff[:,i]))# result = np.array(fits)
 
 if args.graphic:
     diff = answer - y

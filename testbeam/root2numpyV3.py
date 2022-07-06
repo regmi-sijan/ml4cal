@@ -46,7 +46,7 @@ parser.add_argument("-N", "--entries",  type=int,   help="Number of samples",   
 parser.add_argument("-c", "--channel",  type=int,   help="Channel",             default=0)
 
 
-parser.add_argument("-g", "--gain",     type=float, help="gain (guess",        default=500.0)
+parser.add_argument("-g", "--gain",     type=float, help="gain (guess)",        default=500.0)
 parser.add_argument("-r", "--r2",       type=float, help="R2 threshold",       default=0.0)
 
 parser.add_argument("-v", "--verbose",  action='store_true',    help="Verbose mode")
