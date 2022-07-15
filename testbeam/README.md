@@ -3,6 +3,16 @@
 
 In the present version the length of the array is hardcoded to 31 for simplicity. __FIXME__.
 
+# ONNX Conversion
+
+```bash
+# Install the module
+pip install tf2onnx
+
+# Convert an existing model
+python -m tf2onnx.convert --saved-model ./16_ch27 --output tfmodel.onnx
+```
+
 # R2 map and channel map
 
 ```
