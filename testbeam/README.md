@@ -2,6 +2,8 @@
 # Caution
 
 In the present version the length of the array is hardcoded to 31 for simplicity. __FIXME__.
+Also, the converted/fit samples have 4 parameters attached (amplitude, time, pedestal, buzz),
+but only 3 are used in the current state of the ML study.
 
 # ONNX Conversion
 
