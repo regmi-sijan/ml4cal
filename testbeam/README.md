@@ -1,3 +1,8 @@
+
+# Caution
+
+In the present version the length of the array is hardcoded to 31 for simplicity. __FIXME__.
+
 # R2 map and channel map
 
 ```

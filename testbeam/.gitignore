@@ -1,3 +1,6 @@
+# ONNX models not checked by default:
+*.onnx
+# numpy arrays
 *.npy
 *.npz
 *.png
