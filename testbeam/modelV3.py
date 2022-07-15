@@ -42,6 +42,8 @@ parser.add_argument("-o", "--optimizer",type=str,   help="Optimizer", default='a
 
 parser.add_argument("-v", "--verbose",  action='store_true',    help="Verbose mode")
 
+parser.add_argument("-c", "--chatty",  action='store_true',    help="Very verbose mode (chatty)")
+
 args    = parser.parse_args()
 
 infile  = args.infile
@@ -53,6 +55,7 @@ epoch   = args.epoch
 loss    = args.loss
 act     = args.activation
 opt     = args.optimizer
+chatty  = args.chatty
 
 verbose = args.verbose
 
@@ -72,9 +75,11 @@ L = 31 # len(dataset[0]) - 3 or 4 # three or four trailing numbers are "y" (opti
 X = dataset[:,0:L]
 y = dataset[:,(L):(L+3)] # the "y" vector: amplitude, time, pedestal
 
-#for i in range(3):
-#    print(y[i])
-#exit(0)
+if chatty:
+    print(y.shape)
+    for i in range(1000):
+        print(y[i][1])
+    exit(0)
 
 # for i in range(0,4): print(X[i], '!', y[i])
 
