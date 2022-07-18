@@ -9,6 +9,8 @@
 /docs/
 data
 data/*
+models
+models/*
 tf
 tf/*
 __pycache__
