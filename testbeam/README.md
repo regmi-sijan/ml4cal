@@ -5,16 +5,6 @@ In the present version the length of the array is hardcoded to 31 for simplicity
 Also, the converted/fit samples have 4 parameters attached (amplitude, time, pedestal, buzz),
 but only 3 are used in the current state of the ML study.
 
-# ONNX Conversion
-
-```bash
-# Install the module
-pip install tf2onnx
-
-# Convert an existing model
-python -m tf2onnx.convert --saved-model ./16_ch27 --output tfmodel.onnx
-```
-
 # R2 map and channel map
 
 ```

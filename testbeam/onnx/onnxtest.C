@@ -10,6 +10,13 @@
 #include <string>
 #include <vector>
 
+#include <string>
+
+#include "lyra.hpp"
+
+using namespace std;
+
+
 template <typename T>
 T vectorProduct(const std::vector<T>& v)
 {
@@ -125,7 +132,33 @@ std::vector<std::string> readLabels(std::string& labelFilepath)
 
 
 int main(int argc, char* argv[]) {
-    std::string modelFilepath{"tfmodel.onnx"};
+
+    bool verbose            =   false;
+    std::string modelfile   =   "tfmodel.onnx";
+
+
+    auto cli = lyra::cli()
+        | lyra::opt(verbose)
+            ["-v"]["--verbose"]
+            ("verbose" )
+        | lyra::opt(modelfile, "model" )
+            ["-m"]["--model"]
+            ("model");
+
+
+    auto result = cli.parse( { argc, argv } );
+    if ( !result ) {
+            std::cerr << "Error in command line: " << result.errorMessage() << std::endl;
+            exit(1);
+    }
+
+
+    if(verbose) {
+        std::cout << "Verbose mode selected" << std::endl;
+        std::cout << "Model file: " << modelfile << std::endl;
+    }
+
+    std::string modelFilepath{modelfile};
     std::string instanceName{"fit"};
 
     Ort::Env env(OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING,
@@ -136,6 +169,8 @@ int main(int argc, char* argv[]) {
     sessionOptions.SetGraphOptimizationLevel(
         GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
 
+
+
     Ort::Session session(env, modelFilepath.c_str(), sessionOptions);
 
     Ort::AllocatorWithDefaultOptions allocator;
@@ -143,36 +178,39 @@ int main(int argc, char* argv[]) {
     size_t numInputNodes = session.GetInputCount();
     size_t numOutputNodes = session.GetOutputCount();
 
-    std::cout << "Number of Input Nodes: " << numInputNodes << std::endl;
-    std::cout << "Number of Output Nodes: " << numOutputNodes << std::endl;
-
     const char* inputName = session.GetInputName(0, allocator);
 
-    std::cout << "Input Name: " << inputName << std::endl;
-   
 
     Ort::TypeInfo inputTypeInfo = session.GetInputTypeInfo(0);
     auto inputTensorInfo = inputTypeInfo.GetTensorTypeAndShapeInfo();
 
     ONNXTensorElementDataType inputType = inputTensorInfo.GetElementType();
-    std::cout << "Input Type: " << inputType << std::endl;
 
     std::vector<int64_t> inputDims = inputTensorInfo.GetShape();
     inputDims[0] = 1;
-    std::cout << "Input Dimensions: " << inputDims << std::endl;
+
 
     const char* outputName = session.GetOutputName(0, allocator);
-    std::cout << "Output Name: " << outputName << std::endl;
+
 
     Ort::TypeInfo outputTypeInfo = session.GetOutputTypeInfo(0);
     auto outputTensorInfo = outputTypeInfo.GetTensorTypeAndShapeInfo();
 
     ONNXTensorElementDataType outputType = outputTensorInfo.GetElementType();
-    std::cout << "Output Type: " << outputType << std::endl;
 
     std::vector<int64_t> outputDims = outputTensorInfo.GetShape();
     outputDims[0] = 1;
-    std::cout << "Output Dimensions: " << outputDims << std::endl;      
+
+    if(verbose) {
+        std::cout << "Number of Input Nodes: " << numInputNodes << std::endl;
+        std::cout << "Number of Output Nodes: " << numOutputNodes << std::endl;
+        std::cout << "Input Name: " << inputName << std::endl;
+        std::cout << "Input Type: " << inputType << std::endl;
+        std::cout << "Input Dimensions: " << inputDims << std::endl;
+        std::cout << "Output Name: " << outputName << std::endl;
+        std::cout << "Output Type: " << outputType << std::endl;
+        std::cout << "Output Dimensions: " << outputDims << std::endl;
+    }
 
 
     size_t inputTensorSize = vectorProduct(inputDims);

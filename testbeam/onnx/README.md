@@ -16,3 +16,13 @@ export LD_LIBRARY_PATH=/home/maxim/onnxruntime-linux-x64-1.11.1/lib/
 # 
 g++ onnxtest.C -L$LD_LIBRARY_PATH -lonnxruntime
 ```
+
+# ONNX Conversion
+
+```bash
+# Install the module (needs tensorflow installed, too)
+pip install tf2onnx
+
+# Convert an existing model
+python -m tf2onnx.convert --saved-model ./16_ch27 --output tfmodel.onnx
+```
