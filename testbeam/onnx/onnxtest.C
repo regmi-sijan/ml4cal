@@ -133,6 +133,7 @@ std::vector<std::string> readLabels(std::string& labelFilepath)
 
 int main(int argc, char* argv[]) {
 
+    bool help               =   false;
     bool verbose            =   false;
     std::string modelfile   =   "tfmodel.onnx";
 
@@ -143,8 +144,8 @@ int main(int argc, char* argv[]) {
             ("verbose" )
         | lyra::opt(modelfile, "model" )
             ["-m"]["--model"]
-            ("model");
-
+            ("model")
+        | lyra::help(help);
 
     auto result = cli.parse( { argc, argv } );
     if ( !result ) {
@@ -152,6 +153,11 @@ int main(int argc, char* argv[]) {
             exit(1);
     }
 
+
+    if(help) {
+        std::cout << cli << std::endl;
+        exit(0);
+    }
 
     if(verbose) {
         std::cout << "Verbose mode selected" << std::endl;
