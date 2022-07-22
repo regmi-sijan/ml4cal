@@ -5,5 +5,5 @@
 export CPLUS_INCLUDE_PATH=./onnxruntime-linux-x64-1.11.1/include/
 export LD_LIBRARY_PATH=./onnxruntime-linux-x64-1.11.1/lib/
 
-g++ onnxtest.C -L$LD_LIBRARY_PATH -lonnxruntime
+g++ onnxtest.C $(root-config --glibs --cflags --libs) -L$LD_LIBRARY_PATH -lonnxruntime -o onnxtest
 

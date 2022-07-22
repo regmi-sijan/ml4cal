@@ -14,6 +14,10 @@ using namespace std;
 
 #include <string>
 
+// ROOT
+#include "TFile.h"
+#include "TTree.h"
+
 #include "lyra.hpp"
 #include "onnxutil.h"
 
@@ -21,9 +25,13 @@ using namespace std;
 
 int main(int argc, char* argv[]) {
 
-    bool help               =   false;
-    bool verbose            =   false;
-    std::string modelfile   =   "tfmodel.onnx";
+    bool help               = false;
+    bool verbose            = false;
+
+    int N                   = 0;
+
+    std::string modelfile   = "tfmodel.onnx";
+    std::string rootfile    = "rootfile.root";
 
 
     auto cli = lyra::cli()
@@ -33,6 +41,12 @@ int main(int argc, char* argv[]) {
         | lyra::opt(modelfile, "model" )
             ["-m"]["--model"]
             ("model")
+        | lyra::opt(rootfile, "root" )
+            ["-r"]["--root"]
+            ("root")
+        | lyra::opt(N, "N")
+            ["-N"]["--Nentries"]
+            ("root")                        
         | lyra::help(help);
 
     auto result = cli.parse( { argc, argv } );
@@ -48,8 +62,10 @@ int main(int argc, char* argv[]) {
     }
 
     if(verbose) {
-        std::cout << "Verbose mode selected" << std::endl;
-        std::cout << "Model file: " << modelfile << std::endl;
+        std::cout << "*** Verbose mode selected" << std::endl;
+        std::cout << "*** Model file: " << modelfile << std::endl;
+        std::cout << "*** ROOT file: " << rootfile << std::endl;
+        std::cout << "*** Number of entries to be processed: " << N << std::endl;
     }
 
     std::string modelFilepath{modelfile};
@@ -96,24 +112,54 @@ int main(int argc, char* argv[]) {
     outputDims[0] = 1;
 
     if(verbose) {
-        std::cout << "Number of Input Nodes: " << numInputNodes << std::endl;
-        std::cout << "Number of Output Nodes: " << numOutputNodes << std::endl;
-        std::cout << "Input Name: " << inputName << std::endl;
-        std::cout << "Input Type: " << inputType << std::endl;
-        std::cout << "Input Dimensions: " << inputDims << std::endl;
-        std::cout << "Output Name: " << outputName << std::endl;
-        std::cout << "Output Type: " << outputType << std::endl;
-        std::cout << "Output Dimensions: " << outputDims << std::endl;
+        std::cout << "*** Number of Input Nodes: "      << numInputNodes    << std::endl;
+        std::cout << "*** Number of Output Nodes: "     << numOutputNodes   << std::endl;
+        std::cout << "*** Input Name: "                 << inputName        << std::endl;
+        std::cout << "*** Input Type: "                 << inputType        << std::endl;
+        std::cout << "*** Input Dimensions: "           << inputDims        << std::endl;
+        std::cout << "*** Output Name: "                << outputName       << std::endl;
+        std::cout << "*** Output Type: "                << outputType       << std::endl;
+        std::cout << "*** Output Dimensions: "          << outputDims       << std::endl;
     }
 
 
-    size_t inputTensorSize = vectorProduct(inputDims);
+    size_t inputTensorSize  = vectorProduct(inputDims);
     size_t outputTensorSize = vectorProduct(outputDims);
 
     std::vector<float> inputTensorValues(inputTensorSize);
 
-    inputTensorValues.assign({1554.0, 1558.0, 1555.0, 1564.0, 1558.0, 1555.0, 1556.0, 1554.0, 1750.0, 2284.0, 2424.0, 2116.0, 1838.0, 1713.0, 1649.0, 1613.0, 1601.0, 1589.0, 1583.0, 1578.0, 1572.0, 1574.0, 1573.0, 1569.0, 1567.0, 1562.0, 1563.0, 1560.0, 1561.0, 1557.0, 1557.0});
-    std::cout <<inputTensorValues<< std::endl;
+    // input has been declared, now proceed to read the data:
+
+    TFile f(TString(rootfile.c_str()));
+
+    if (f.IsZombie()) { cout << "Error opening file" << endl; exit(-1);}
+
+    if (verbose) { cout << "*** Input ROOT file " << rootfile << " has been opened." << endl;}
+
+
+    TTree   *tree       = (TTree*)f.Get("trainingtree;1");
+    TBranch *branch     = tree->GetBranch("waveform");
+
+    Int_t waveform[64][32];
+    branch->SetAddress(&waveform);      // will read into this array
+    Long64_t n = branch->GetEntries();  // number of entries in the branch
+    if( N==0 || N>n ) { N=n; }          // decide how many to process, 0=all
+
+    if(verbose) {
+        std::cout << "*** Number of entries in the file: " << n << std::endl;
+        std::cout << "*** Number of entries to be processed: " << N << std::endl;
+    }
+
+    for (int i=0; i<N; i++) {
+        Int_t m = branch->GetEntry(i);
+        for(int bin=0; bin<32; bin++) {cout<< waveform[27][bin] << " ";}
+        cout << endl;        
+    }
+    
+    
+    // Original place for inputTensorValues.assign
+    inputTensorValues = testArray;
+    // inputTensorValues.assign({1554.0, 1558.0, 1555.0,  1564.0, 1558.0, 1555.0, 1556.0, 1554.0, 1750.0, 2284.0, 2424.0, 2116.0, 1838.0, 1713.0, 1649.0, 1613.0, 1601.0, 1589.0, 1583.0, 1578.0, 1572.0, 1574.0, 1573.0, 1569.0, 1567.0, 1562.0, 1563.0, 1560.0, 1561.0, 1557.0, 1557.0});
 
     std::vector<float> outputTensorValues(outputTensorSize);
 
@@ -133,6 +179,17 @@ int main(int argc, char* argv[]) {
         memoryInfo, outputTensorValues.data(), outputTensorSize,
         outputDims.data(), outputDims.size()));
         
+
+
+    // cout<<testArray<<endl;
+
+    // see comment above
+    // inputTensorValues.assign(testArray.data);
+
+    if (verbose) {
+        std::cout <<inputTensorValues<< std::endl;
+    }
+
     session.Run(Ort::RunOptions{nullptr}, inputNames.data(),
                 inputTensors.data(), 1, outputNames.data(),
                 outputTensors.data(), 1);            
