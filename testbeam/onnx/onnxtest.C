@@ -126,16 +126,13 @@ int main(int argc, char* argv[]) {
     size_t inputTensorSize  = vectorProduct(inputDims);
     size_t outputTensorSize = vectorProduct(outputDims);
 
+    //Declare container for input data:
     std::vector<float> inputTensorValues(inputTensorSize);
 
-    // input has been declared, now proceed to read the data:
-
+    // Proceed to read the data from a ROOT tree:
     TFile f(TString(rootfile.c_str()));
-
     if (f.IsZombie()) { cout << "Error opening file" << endl; exit(-1);}
-
     if (verbose) { cout << "*** Input ROOT file " << rootfile << " has been opened." << endl;}
-
 
     TTree   *tree       = (TTree*)f.Get("trainingtree;1");
     TBranch *branch     = tree->GetBranch("waveform");
@@ -150,17 +147,9 @@ int main(int argc, char* argv[]) {
         std::cout << "*** Number of entries to be processed: " << N << std::endl;
     }
 
-    for (int i=0; i<N; i++) {
-        Int_t m = branch->GetEntry(i);
-        for(int bin=0; bin<32; bin++) {cout<< waveform[27][bin] << " ";}
-        cout << endl;        
-    }
-    
-    
-    // Original place for inputTensorValues.assign
-    inputTensorValues = testArray;
-    // inputTensorValues.assign({1554.0, 1558.0, 1555.0,  1564.0, 1558.0, 1555.0, 1556.0, 1554.0, 1750.0, 2284.0, 2424.0, 2116.0, 1838.0, 1713.0, 1649.0, 1613.0, 1601.0, 1589.0, 1583.0, 1578.0, 1572.0, 1574.0, 1573.0, 1569.0, 1567.0, 1562.0, 1563.0, 1560.0, 1561.0, 1557.0, 1557.0});
 
+
+    // start Ort boilerplate
     std::vector<float> outputTensorValues(outputTensorSize);
 
     std::vector<const char*> inputNames{inputName};
@@ -170,30 +159,40 @@ int main(int argc, char* argv[]) {
 
     Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(
         OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
+    // end Ort boilerplace
 
-    inputTensors.push_back(Ort::Value::CreateTensor<float>(
-        memoryInfo, inputTensorValues.data(), inputTensorSize, inputDims.data(),
-        inputDims.size()));
+    for (int i=0; i<N; i++) {
+        Int_t m = branch->GetEntry(i);
+        // if(verbose) {for(int bin=0; bin<32; bin++) {cout<< waveform[27][bin] << " ";} cout << endl; }
 
-    outputTensors.push_back(Ort::Value::CreateTensor<float>(
-        memoryInfo, outputTensorValues.data(), outputTensorSize,
-        outputDims.data(), outputDims.size()));
-        
+        // cout << sizeof(waveform[27]) <<endl;
+        vector<float> a[31];
 
+        for(int bin=0; bin<31; bin++) {
+            inputTensorValues[bin] = (float) waveform[27][bin];
+        }
 
-    // cout<<testArray<<endl;
+        // cout << inputTensorValues << endl;
+        inputTensors.push_back(Ort::Value::CreateTensor<float>(
+            memoryInfo, inputTensorValues.data(), inputTensorSize, inputDims.data(),
+            inputDims.size()));
 
-    // see comment above
-    // inputTensorValues.assign(testArray.data);
+        outputTensors.push_back(Ort::Value::CreateTensor<float>(
+            memoryInfo, outputTensorValues.data(), outputTensorSize,
+            outputDims.data(), outputDims.size()));
+    
+        session.Run(Ort::RunOptions{nullptr}, inputNames.data(),
+            inputTensors.data(), 1, outputNames.data(),
+            outputTensors.data(), 1);  
 
-    if (verbose) {
-        std::cout <<inputTensorValues<< std::endl;
+        std::cout << outputTensorValues << std::endl;
+
+        // vector<float> data(a,a + sizeof( a ) / sizeof( a[0] ) );
+        // inputTensorValues = waveform[27];
     }
+    
+    exit(0);
+    
 
-    session.Run(Ort::RunOptions{nullptr}, inputNames.data(),
-                inputTensors.data(), 1, outputNames.data(),
-                outputTensors.data(), 1);            
-
-    std::cout << outputTensorValues << std::endl;
 
 }
