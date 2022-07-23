@@ -21,7 +21,7 @@ using namespace std;
 #include "lyra.hpp"
 #include "onnxutil.h"
 
-
+using namespace std::chrono;
 
 int main(int argc, char* argv[]) {
 
@@ -181,10 +181,14 @@ int main(int argc, char* argv[]) {
             memoryInfo, outputTensorValues.data(), outputTensorSize,
             outputDims.data(), outputDims.size()));
     
+        // Get starting timepoint
+        auto start = chrono::high_resolution_clock::now();
         session.Run(Ort::RunOptions{nullptr}, inputNames.data(),
             inputTensors.data(), 1, outputNames.data(),
             outputTensors.data(), 1);  
-
+        auto stop = chrono::high_resolution_clock::now();
+        auto duration = chrono::duration_cast<microseconds>(stop - start);
+        cout << "Microseconds: " << duration.count() << endl;
         std::cout << outputTensorValues << std::endl;
 
         // vector<float> data(a,a + sizeof( a ) / sizeof( a[0] ) );
