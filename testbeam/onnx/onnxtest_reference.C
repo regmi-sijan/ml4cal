@@ -23,8 +23,6 @@ using namespace std;
 
 using namespace std::chrono;
 
-Ort::Env create_env(const char* name);
-
 int main(int argc, char* argv[]) {
 
     bool help               = false;
@@ -73,9 +71,7 @@ int main(int argc, char* argv[]) {
     std::string modelFilepath{modelfile};
     std::string instanceName{"fit"};
 
-    Ort::Env env = create_env(instanceName.c_str());
-
-    // Ort::Env env(OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING, instanceName.c_str());
+    Ort::Env env(OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING, instanceName.c_str());
 
     Ort::SessionOptions sessionOptions;
 

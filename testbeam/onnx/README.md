@@ -44,6 +44,12 @@ export LD_LIBRARY_PATH=/home/maxim/onnxruntime-linux-x64-1.11.1/lib
 g++ onnxtest.C -L$LD_LIBRARY_PATH -lonnxruntime
 ```
 
+### Running the test app
+
+```bash
+# One example:
+ ./onnxtest -v -r  ~/data/evaluationtrees/8gev_2101.root -m ../ch27.onnx -N 50
+```
 
 ### ONNX Conversion
 
