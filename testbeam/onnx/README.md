@@ -42,6 +42,9 @@ in this folder. The basic test of ONNX C++ runtime --  build procedure:
 export CPLUS_INCLUDE_PATH=/home/maxim/onnxruntime-linux-x64-1.11.1/include/
 export LD_LIBRARY_PATH=/home/maxim/onnxruntime-linux-x64-1.11.1/lib
 g++ onnxtest.C -L$LD_LIBRARY_PATH -lonnxruntime
+
+# Building a helper library
+g++ onnxlib.C -L$LD_LIBRARY_PATH -lonnxruntime -fPIC -shared -o onnxlib.so
 ```
 
 ### Running the test app

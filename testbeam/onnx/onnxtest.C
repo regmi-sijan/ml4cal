@@ -20,10 +20,11 @@ using namespace std;
 
 #include "lyra.hpp"
 #include "onnxutil.h"
+#include "onnxlib.h"
 
 using namespace std::chrono;
 
-Ort::Env create_env(const char* name);
+
 
 int main(int argc, char* argv[]) {
 
@@ -73,17 +74,13 @@ int main(int argc, char* argv[]) {
     std::string modelFilepath{modelfile};
     std::string instanceName{"fit"};
 
-    Ort::Env env = create_env(instanceName.c_str());
+    // Ort::Env env = create_env(instanceName.c_str());
+    // Ort::SessionOptions sessionOptions;
+    // sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
 
-    // Ort::Env env(OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING, instanceName.c_str());
+    // Ort::Session session(env, modelFilepath.c_str(), sessionOptions);
 
-    Ort::SessionOptions sessionOptions;
-
-    sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
-
-
-
-    Ort::Session session(env, modelFilepath.c_str(), sessionOptions);
+    Ort::Session session = onnx_session(modelFilepath.c_str(), instanceName.c_str());
 
     Ort::AllocatorWithDefaultOptions allocator;
 

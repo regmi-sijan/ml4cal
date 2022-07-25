@@ -1,5 +1,11 @@
+# VS
+.vscode
+# binaries
+*.so
 # ONNX models not checked by default:
 *.onnx
+# test binaries
+*test
 # numpy arrays
 *.npy
 *.npz
