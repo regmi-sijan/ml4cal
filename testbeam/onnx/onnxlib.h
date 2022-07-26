@@ -1,5 +1,5 @@
-Ort::Session onnx_session(const char* modelFilepath, const char* envName);
-std::vector<int64_t> onnx_inputDimensions(Ort::Session const* s);
+#ifndef ONNX_SESSION_LIB_H
+#define ONNX_SESSION_LIB_H
 
 class OnnxSession {
     public:
@@ -17,3 +17,5 @@ class OnnxSession {
         size_t _numInputNodes;
         size_t _numOutputNodes;        
 };
+
+#endif

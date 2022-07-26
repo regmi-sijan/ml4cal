@@ -32,33 +32,31 @@ int main(int argc, char* argv[]) {
     bool verbose            = false;
 
     int N                   = 0;
+    int channel             = 27;
 
     std::string modelfile   = "tfmodel.onnx";
     std::string rootfile    = "rootfile.root";
 
-
     auto cli = lyra::cli()
         | lyra::opt(verbose)
             ["-v"]["--verbose"]
-            ("verbose" )
+            ("Verbose mode")
         | lyra::opt(modelfile, "model" )
             ["-m"]["--model"]
-            ("model")
+            ("File containing the ONNX model")
         | lyra::opt(rootfile, "root" )
             ["-r"]["--root"]
-            ("root")
+            ("ROOT file to be read")
         | lyra::opt(N, "N")
             ["-N"]["--Nentries"]
-            ("root")                        
+            ("Number of entries to process")                        
+        | lyra::opt(channel, "channel")
+            ["-c"]["--channel"]
+            ("Caloriemter channel")
         | lyra::help(help);
 
     auto result = cli.parse( { argc, argv } );
-    if ( !result ) {
-            std::cerr << "Error in command line: " << result.errorMessage() << std::endl;
-            exit(1);
-    }
-
-
+    if( !result ) {std::cerr << "Error in command line: " << result.errorMessage() << std::endl;exit(1);}
     if(help) {std::cout << cli << std::endl; exit(0);}
 
     if(verbose) {
@@ -106,18 +104,22 @@ int main(int argc, char* argv[]) {
 
     Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
+
+    std::vector<float> w31(inputTensorSize); // 31 bins in the test beam data
+
     for (int i=0; i<N; i++) {
         Int_t m = branch->GetEntry(i);
         auto start = chrono::high_resolution_clock::now();
 
         std::vector<int> inp;
-        inp.insert(inp.begin(), std::begin(waveform[27]), std::end(waveform[27]));
-        std::vector<float> w31(inputTensorSize);
+        inp.insert(inp.begin(), std::begin(waveform[channel]), std::end(waveform[channel]));
+
         std::transform(inp.begin(), inp.end()-1, w31.begin(), [](int x) {return (float)x;});
 
-        inputTensors.push_back (Ort::Value::CreateTensor<float>(memoryInfo, w31.data(), inputTensorSize, inputDims.data(), inputDims.size()));
-        outputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, outputTensorValues.data(), outputTensorSize, outputDims.data(), outputDims.size()));
+        inputTensors.push_back (Ort::Value::CreateTensor<float>(memoryInfo, w31.data(),                 inputTensorSize,    inputDims.data(),   inputDims.size()));
+        outputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, outputTensorValues.data(),  outputTensorSize, outputDims.data(),    outputDims.size()));
 
+        // core inference
         oS->_session->Run(Ort::RunOptions{nullptr}, inputNames.data(),        
             inputTensors.data(), 1, outputNames.data(),
             outputTensors.data(), 1);  

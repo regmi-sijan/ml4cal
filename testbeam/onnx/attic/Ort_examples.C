@@ -1,3 +1,11 @@
+
+// - header snippet:
+
+Ort::Session onnx_session(const char* modelFilepath, const char* envName);
+std::vector<int64_t> onnx_inputDimensions(Ort::Session const* s);
+
+// - some standalone helper functions:
+
 Ort::Env create_env(const char* name) {
     Ort::Env env(OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING, name);
     return env;
@@ -35,5 +43,10 @@ std::vector<int64_t> onnx_inputDimensions(Ort::Session const* s) {
     return inputDims;
 }
 
+
+
+
+
+// -- misc
 // const char* c_str() const;
 // std::vector<int64_t> foo = {1,2,3};
