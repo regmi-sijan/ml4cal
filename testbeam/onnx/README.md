@@ -1,5 +1,50 @@
 # Application of ONNX to the EMCal signal frature extraction
 
+## ONNX
+
+### ONNX runtime binaries
+
+To make things easier, there is a copy of prefab binaries,
+complete with the original license which makes this procedure
+proper, placed in this folder.
+
+```bash
+# Example of the include and library path definitions
+export CPLUS_INCLUDE_PATH=./onnxruntime-linux-x64-1.11.1/include
+export LD_LIBRARY_PATH=./onnxruntime-linux-x64-1.11.1/lib
+```
+
+There is also a script `setup.sh` which can be sourced to set
+this easily.
+
+### Build and Run the test application
+
+There is a `Makefile` for building the test application. It will
+access the environment variables set as described above. The resulting
+executable is names `onnxtext`.
+
+```bash
+# An example of the 'onnxtest' run:
+ ./onnxtest -v -r  ~/data/evaluationtrees/8gev_2101.root -m ../ch27.onnx -N 50
+```
+
+The application is using the `lyra` library to parse the command line. For example,
+one can use the `help` option to get information about the CLI:
+
+```bash
+onnxtest --help
+```
+
+### ONNX Conversion
+
+```bash
+# Install the module (needs tensorflow installed, too)
+pip install tf2onnx
+
+# Convert an existing model
+python -m tf2onnx.convert --saved-model ./16_ch27 --output tfmodel.onnx
+```
+
 ## Setting up ROOT (if necessary)
 
 ### ROOT Prerequisites and build
@@ -26,39 +71,4 @@ g++ roottest.C $(root-config --glibs --cflags --libs) -o roottest
 # Example of the command line option
 ./roottest -r myROOTfile.root
 
-```
-
-## ONNX
-
-### ONNX runtime binaries
-
-To make things easier, there is a copy of prefab binaries,
-complete with the original license which makes this procedure
-proper, placed in this folder.
-
-```bash
-# Example of the include and library path definitions
-export CPLUS_INCLUDE_PATH=./onnxruntime-linux-x64-1.11.1/include
-export LD_LIBRARY_PATH=./onnxruntime-linux-x64-1.11.1/lib
-```
-
-### Build and Run the test application
-
-There is a `Makefile` for building the test application. It will
-access the environment variables set as described above. The resulting
-executable is names `onnxtext`.
-
-```bash
-# An example of the 'onnxtest' run:
- ./onnxtest -v -r  ~/data/evaluationtrees/8gev_2101.root -m ../ch27.onnx -N 50
-```
-
-### ONNX Conversion
-
-```bash
-# Install the module (needs tensorflow installed, too)
-pip install tf2onnx
-
-# Convert an existing model
-python -m tf2onnx.convert --saved-model ./16_ch27 --output tfmodel.onnx
 ```
