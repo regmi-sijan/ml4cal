@@ -59,10 +59,7 @@ int main(int argc, char* argv[]) {
     }
 
 
-    if(help) {
-        std::cout << cli << std::endl;
-        exit(0);
-    }
+    if(help) {std::cout << cli << std::endl; exit(0);}
 
     if(verbose) {
         std::cout << "*** Verbose mode selected" << std::endl << "*** Model file: " << modelfile << std::endl;
@@ -79,17 +76,13 @@ int main(int argc, char* argv[]) {
     ONNXTensorElementDataType inputType = oS->_inputType, outputType = oS->_outputType;
 
     if(verbose) {
-        std::cout << "*** Input Nodes:\t" << numInputNodes << ",\t\t Output Nodes: " << numOutputNodes << std::endl;
-        std::cout << "*** Input Name:\t\t"            << inputName     << ",\t Input Type: "  << inputType  << ",\t Input Dimensions:\t" << inputDims << std::endl;
-        std::cout << "*** Output Name:\t"           << outputName    << ",\t Output Type: " << outputType << ",\t Output Dimensions:\t"<< outputDims<< std::endl;
+        std::cout << "*** Input Nodes:\t"   << numInputNodes << ",\t\t Output Nodes: "  << numOutputNodes << std::endl;
+        std::cout << "*** Input Name:\t\t"  << inputName     << ",\t Input Type: "      << inputType  << ",\t Input Dimensions:\t"  << inputDims    << std::endl;
+        std::cout << "*** Output Name:\t"   << outputName    << ",\t Output Type: "     << outputType << ",\t Output Dimensions:\t" << outputDims   << std::endl;
     }
 
 
-    size_t inputTensorSize  = vectorProduct(inputDims);
-    size_t outputTensorSize = vectorProduct(outputDims);
-
-    //Declare container for input data:
-    std::vector<float> inputTensorValues(inputTensorSize);
+    size_t inputTensorSize = vectorProduct(inputDims), outputTensorSize = vectorProduct(outputDims);
 
     // Proceed to read the data from a ROOT tree:
     TFile f(TString(rootfile.c_str()));
@@ -108,35 +101,22 @@ int main(int argc, char* argv[]) {
 
     std::vector<float>          outputTensorValues(outputTensorSize);
 
-    std::vector<const char*>    inputNames{inputName};
-    std::vector<const char*>    outputNames{outputName};
-    std::vector<Ort::Value>     inputTensors;
-    std::vector<Ort::Value>     outputTensors;
+    std::vector<const char*>    inputNames{inputName}, outputNames{outputName};
+    std::vector<Ort::Value>     inputTensors, outputTensors;
 
     Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
     for (int i=0; i<N; i++) {
         Int_t m = branch->GetEntry(i);
-
-
-        // std::transform(intVec.begin(), intVec.end(), doubleVec.begin(), [](int x) { return (double)x;});
-        // inputTensorValues = std::vector<int>({1,2})
-
-        for(int bin=0; bin<31; bin++) {
-            inputTensorValues[bin] = (float) waveform[27][bin];
-        }
-
-        // cout << inputTensorValues << endl;
-        inputTensors.push_back(Ort::Value::CreateTensor<float>(
-            memoryInfo, inputTensorValues.data(), inputTensorSize, inputDims.data(),
-            inputDims.size()));
-
-        outputTensors.push_back(Ort::Value::CreateTensor<float>(
-            memoryInfo, outputTensorValues.data(), outputTensorSize,
-            outputDims.data(), outputDims.size()));
-    
-        // Get starting timepoint
         auto start = chrono::high_resolution_clock::now();
+
+        std::vector<int> inp;
+        inp.insert(inp.begin(), std::begin(waveform[27]), std::end(waveform[27]));
+        std::vector<float> w31(inputTensorSize);
+        std::transform(inp.begin(), inp.end()-1, w31.begin(), [](int x) {return (float)x;});
+
+        inputTensors.push_back (Ort::Value::CreateTensor<float>(memoryInfo, w31.data(), inputTensorSize, inputDims.data(), inputDims.size()));
+        outputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, outputTensorValues.data(), outputTensorSize, outputDims.data(), outputDims.size()));
 
         oS->_session->Run(Ort::RunOptions{nullptr}, inputNames.data(),        
             inputTensors.data(), 1, outputNames.data(),
@@ -147,12 +127,14 @@ int main(int argc, char* argv[]) {
         cout << "Microseconds: " << duration.count() << endl;
         
         std::cout << outputTensorValues << std::endl;
-
-        // vector<float> data(a,a + sizeof( a ) / sizeof( a[0] ) );
-        // inputTensorValues = waveform[27];
     }
     exit(0);
 }
+
+   //Declare container for input data: std::vector<float> inputTensorValues(inputTensorSize);
         // if(verbose) {for(int bin=0; bin<32; bin++) {cout<< waveform[27][bin] << " ";} cout << endl; }
         // cout << sizeof(waveform[27]) <<endl;
         // vector<float> a[31];
+        // for(int bin=0; bin<31; bin++) {inputTensorValues[bin] = (float) waveform[27][bin];} // low-tech way of conversion
+//  memoryInfo, inputTensorValues.data(), inputTensorSize, inputDims.data(),
+//            memoryInfo, w31.data(), inputTensorSize, inputDims.data(),         
