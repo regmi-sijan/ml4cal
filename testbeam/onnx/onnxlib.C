@@ -1,4 +1,6 @@
 #include <onnxruntime_cxx_api.h>
+#include "onnxlib.h"
+
 
 Ort::Env create_env(const char* name) {
     Ort::Env env(OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING, name);
@@ -17,5 +19,59 @@ Ort::Session onnx_session(const char* modelFilepath, const char* envName) {
 }
 
 
+std::vector<int64_t> onnx_inputDimensions(Ort::Session const* s) {
+    Ort::AllocatorWithDefaultOptions allocator;
+
+    size_t numInputNodes        = s->GetInputCount();
+    size_t numOutputNodes       = s->GetOutputCount();
+
+    const char* inputName       = s->GetInputName(0, allocator);
+
+
+    Ort::TypeInfo inputTypeInfo = s->GetInputTypeInfo(0);
+    auto inputTensorInfo        = inputTypeInfo.GetTensorTypeAndShapeInfo();
+
+    ONNXTensorElementDataType inputType = inputTensorInfo.GetElementType();
+
+    std::vector<int64_t> inputDims = inputTensorInfo.GetShape();
+    inputDims[0] = 1; // fixing feature/bug in ONNX
+
+    return inputDims;
+}
+
+
+
+OnnxSession::OnnxSession(const char* modelFilepath, const char* envName) {
+    Ort::Env env(OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING, envName);
+    Ort::SessionOptions sessionOptions;
+    sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
+    _session = new Ort::Session(env, modelFilepath, sessionOptions);
+
+
+    Ort::AllocatorWithDefaultOptions allocator;
+
+    _numInputNodes              = _session->GetInputCount();
+    _numOutputNodes             = _session->GetOutputCount();
+
+    _inputName                  = _session->GetInputName(0, allocator);
+    _outputName                 = _session->GetOutputName(0, allocator);
+
+    Ort::TypeInfo inputTypeInfo = _session->GetInputTypeInfo(0);
+    auto inputTensorInfo        = inputTypeInfo.GetTensorTypeAndShapeInfo();
+
+    _inputType = inputTensorInfo.GetElementType();
+
+    _inputDimensions = inputTensorInfo.GetShape();
+    _inputDimensions[0] = 1; // fixing feature/bug in ONNX
+
+    Ort::TypeInfo outputTypeInfo = _session->GetOutputTypeInfo(0);
+    auto outputTensorInfo = outputTypeInfo.GetTensorTypeAndShapeInfo();
+
+    _outputType = outputTensorInfo.GetElementType();
+
+    _outputDimensions = outputTensorInfo.GetShape();
+    _outputDimensions[0] = 1; // fixing feature/bug in ONNX
+}
 
 // const char* c_str() const;
+// std::vector<int64_t> foo = {1,2,3};

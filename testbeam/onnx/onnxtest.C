@@ -65,60 +65,23 @@ int main(int argc, char* argv[]) {
     }
 
     if(verbose) {
-        std::cout << "*** Verbose mode selected" << std::endl;
-        std::cout << "*** Model file: " << modelfile << std::endl;
+        std::cout << "*** Verbose mode selected" << std::endl << "*** Model file: " << modelfile << std::endl;
         std::cout << "*** ROOT file: " << rootfile << std::endl;
-        std::cout << "*** Number of entries to be processed: " << N << std::endl;
     }
-
-    std::string modelFilepath{modelfile};
+ 
     std::string instanceName{"fit"};
 
-    // Ort::Env env = create_env(instanceName.c_str());
-    // Ort::SessionOptions sessionOptions;
-    // sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
+    OnnxSession* oS = new OnnxSession(modelfile.c_str(), instanceName.c_str());
 
-    // Ort::Session session(env, modelFilepath.c_str(), sessionOptions);
-
-    Ort::Session session = onnx_session(modelFilepath.c_str(), instanceName.c_str());
-
-    Ort::AllocatorWithDefaultOptions allocator;
-
-    size_t numInputNodes        = session.GetInputCount();
-    size_t numOutputNodes       = session.GetOutputCount();
-
-    const char* inputName       = session.GetInputName(0, allocator);
-
-
-    Ort::TypeInfo inputTypeInfo = session.GetInputTypeInfo(0);
-    auto inputTensorInfo        = inputTypeInfo.GetTensorTypeAndShapeInfo();
-
-    ONNXTensorElementDataType inputType = inputTensorInfo.GetElementType();
-
-    std::vector<int64_t> inputDims = inputTensorInfo.GetShape();
-    inputDims[0] = 1;
-
-
-    const char* outputName = session.GetOutputName(0, allocator);
-
-
-    Ort::TypeInfo outputTypeInfo = session.GetOutputTypeInfo(0);
-    auto outputTensorInfo = outputTypeInfo.GetTensorTypeAndShapeInfo();
-
-    ONNXTensorElementDataType outputType = outputTensorInfo.GetElementType();
-
-    std::vector<int64_t> outputDims = outputTensorInfo.GetShape();
-    outputDims[0] = 1;
+    size_t numInputNodes = oS->_numInputNodes, numOutputNodes = oS->_numOutputNodes;
+    std::vector<int64_t> inputDims = oS->_inputDimensions, outputDims = oS->_outputDimensions;
+    const char* inputName = oS->_inputName; const char* outputName = oS->_outputName;
+    ONNXTensorElementDataType inputType = oS->_inputType, outputType = oS->_outputType;
 
     if(verbose) {
-        std::cout << "*** Number of Input Nodes: "      << numInputNodes    << std::endl;
-        std::cout << "*** Number of Output Nodes: "     << numOutputNodes   << std::endl;
-        std::cout << "*** Input Name: "                 << inputName        << std::endl;
-        std::cout << "*** Input Type: "                 << inputType        << std::endl;
-        std::cout << "*** Input Dimensions: "           << inputDims        << std::endl;
-        std::cout << "*** Output Name: "                << outputName       << std::endl;
-        std::cout << "*** Output Type: "                << outputType       << std::endl;
-        std::cout << "*** Output Dimensions: "          << outputDims       << std::endl;
+        std::cout << "*** Input Nodes:\t" << numInputNodes << ",\t\t Output Nodes: " << numOutputNodes << std::endl;
+        std::cout << "*** Input Name:\t\t"            << inputName     << ",\t Input Type: "  << inputType  << ",\t Input Dimensions:\t" << inputDims << std::endl;
+        std::cout << "*** Output Name:\t"           << outputName    << ",\t Output Type: " << outputType << ",\t Output Dimensions:\t"<< outputDims<< std::endl;
     }
 
 
@@ -131,7 +94,7 @@ int main(int argc, char* argv[]) {
     // Proceed to read the data from a ROOT tree:
     TFile f(TString(rootfile.c_str()));
     if (f.IsZombie()) { cout << "Error opening file" << endl; exit(-1);}
-    if (verbose) { cout << "*** Input ROOT file " << rootfile << " has been opened." << endl;}
+    if (verbose) { cout << "*** Input ROOT file " << rootfile << " has been opened" << endl;}
 
     TTree   *tree       = (TTree*)f.Get("trainingtree;1");
     TBranch *branch     = tree->GetBranch("waveform");
@@ -141,31 +104,23 @@ int main(int argc, char* argv[]) {
     Long64_t n = branch->GetEntries();  // number of entries in the branch
     if( N==0 || N>n ) { N=n; }          // decide how many to process, 0=all
 
-    if(verbose) {
-        std::cout << "*** Number of entries in the file: " << n << std::endl;
-        std::cout << "*** Number of entries to be processed: " << N << std::endl;
-    }
+    if(verbose) { std::cout << "*** Number of entries in the file: " << n << ", Number of entries to be processed: " << N << std::endl; }
 
+    std::vector<float>          outputTensorValues(outputTensorSize);
 
+    std::vector<const char*>    inputNames{inputName};
+    std::vector<const char*>    outputNames{outputName};
+    std::vector<Ort::Value>     inputTensors;
+    std::vector<Ort::Value>     outputTensors;
 
-    // start Ort boilerplate
-    std::vector<float> outputTensorValues(outputTensorSize);
-
-    std::vector<const char*> inputNames{inputName};
-    std::vector<const char*> outputNames{outputName};
-    std::vector<Ort::Value> inputTensors;
-    std::vector<Ort::Value> outputTensors;
-
-    Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(
-        OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
-    // end Ort boilerplace
+    Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
     for (int i=0; i<N; i++) {
         Int_t m = branch->GetEntry(i);
-        // if(verbose) {for(int bin=0; bin<32; bin++) {cout<< waveform[27][bin] << " ";} cout << endl; }
 
-        // cout << sizeof(waveform[27]) <<endl;
-        vector<float> a[31];
+
+        // std::transform(intVec.begin(), intVec.end(), doubleVec.begin(), [](int x) { return (double)x;});
+        // inputTensorValues = std::vector<int>({1,2})
 
         for(int bin=0; bin<31; bin++) {
             inputTensorValues[bin] = (float) waveform[27][bin];
@@ -182,20 +137,22 @@ int main(int argc, char* argv[]) {
     
         // Get starting timepoint
         auto start = chrono::high_resolution_clock::now();
-        session.Run(Ort::RunOptions{nullptr}, inputNames.data(),
+
+        oS->_session->Run(Ort::RunOptions{nullptr}, inputNames.data(),        
             inputTensors.data(), 1, outputNames.data(),
             outputTensors.data(), 1);  
+        
         auto stop = chrono::high_resolution_clock::now();
         auto duration = chrono::duration_cast<microseconds>(stop - start);
         cout << "Microseconds: " << duration.count() << endl;
+        
         std::cout << outputTensorValues << std::endl;
 
         // vector<float> data(a,a + sizeof( a ) / sizeof( a[0] ) );
         // inputTensorValues = waveform[27];
     }
-    
     exit(0);
-    
-
-
 }
+        // if(verbose) {for(int bin=0; bin<32; bin++) {cout<< waveform[27][bin] << " ";} cout << endl; }
+        // cout << sizeof(waveform[27]) <<endl;
+        // vector<float> a[31];
