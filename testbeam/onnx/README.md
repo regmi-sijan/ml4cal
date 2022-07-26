@@ -1,6 +1,5 @@
 # Application of ONNX to the EMCal signal frature extraction
 
-
 ## Setting up ROOT (if necessary)
 
 ### ROOT Prerequisites and build
@@ -34,23 +33,23 @@ g++ roottest.C $(root-config --glibs --cflags --libs) -o roottest
 ### ONNX runtime binaries
 
 To make things easier, there is a copy of prefab binaries,
-complete with the original license which allows for this to happen,
-in this folder. The basic test of ONNX C++ runtime --  build procedure:
+complete with the original license which makes this procedure
+proper, placed in this folder.
 
 ```bash
 # Example of the include and library path definitions
 export CPLUS_INCLUDE_PATH=./onnxruntime-linux-x64-1.11.1/include
 export LD_LIBRARY_PATH=./onnxruntime-linux-x64-1.11.1/lib
-g++ onnxtest.C -L$LD_LIBRARY_PATH -lonnxruntime
-
-# Building a helper library
-g++ onnxlib.C -L$LD_LIBRARY_PATH -lonnxruntime -fPIC -shared -o onnxlib.so
 ```
 
-### Running the test app
+### Build and Run the test application
+
+There is a `Makefile` for building the test application. It will
+access the environment variables set as described above. The resulting
+executable is names `onnxtext`.
 
 ```bash
-# One example:
+# An example of the 'onnxtest' run:
  ./onnxtest -v -r  ~/data/evaluationtrees/8gev_2101.root -m ../ch27.onnx -N 50
 ```
 
