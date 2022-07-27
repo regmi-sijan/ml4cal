@@ -15,6 +15,8 @@ from keras.layers import Dense
 
 from keras.regularizers import l1
 
+from keras.constraints import unit_norm
+
 ################################
 def yes_or_no(question):
     while "the answer is invalid":
@@ -59,6 +61,9 @@ chatty  = args.chatty
 
 verbose = args.verbose
 
+###############################
+np.set_printoptions(precision=2, linewidth=80)
+
 if infile == '':
     print('Please specify the input file name')
     exit(-1)
@@ -69,24 +74,24 @@ with open(infile, 'rb') as f: dataset = np.load(f)
 if verbose: print(f'''Read an array: {dataset.shape}''')
 
 
-L = 31 # len(dataset[0]) - 3 or 4 # three or four trailing numbers are "y" (options)
+L = 31 # len(dataset[0]) - 5 trailing numbers are "y"
 
 # Split into input (X) and output (y) variables
 X = dataset[:,0:L]
-y = dataset[:,(L):(L+3)] # the "y" vector: amplitude, time, pedestal
+y = dataset[:,(L):(L+5)] # the "y" vector: amplitude, time, pedestal, buzz, r2
 
 if chatty:
     print(y.shape)
-    for i in range(1000):
-        print(y[i][1])
+    for i in range(100):
+        print(y[i])
     exit(0)
 
 # for i in range(0,4): print(X[i], '!', y[i])
 
 # Define the Keras model
 model = Sequential()
-model.add(Dense(L, input_dim=L, activation='relu'))
-model.add(Dense(3, activation=act))
+model.add(Dense(L, input_dim=L, activation='relu', kernel_constraint=unit_norm()))
+model.add(Dense(5, activation=act))
 
 # Compile the Keras model
 model.compile(loss=loss, optimizer=opt, metrics=['accuracy'])

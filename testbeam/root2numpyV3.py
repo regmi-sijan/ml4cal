@@ -20,9 +20,11 @@ f['test'].extend({'branch': np.array([1,2,3])})
 
 template=None
 
+t_offset = 6.17742
+
 ###
 def tempfit(x, *par):
-    return par[0]*np.interp((x - par[1]), template[:,0], template[:,1]) + par[2]
+    return par[0]*np.interp((x - par[1] + t_offset), template[:,0], template[:,1]) + par[2]
 
 ###################################
 import uproot3
@@ -71,15 +73,17 @@ branchname  = 'waveform'
 channel     = args.channel
 gain        = args.gain
 
+
+#####################################
+np.set_printoptions(precision=3, linewidth=80)
+
 if(infile==''):
     print('Please specify a valid input file name')
     exit(-1)
-
 file    = uproot3.open(infile)
 
 
-if verbose:
-    print(f'''Will attempt to use the template file "{tmplfile}".''')
+if verbose: print(f'''Will attempt to use the template file "{tmplfile}".''')
 
 try:
     template = loadtxt(tmplfile, delimiter=',')
@@ -106,27 +110,29 @@ X = branch.array()
 dims = X.shape
 if verbose : print(f'''Read an array: {dims}''')
 
-x  = np.linspace(0, 31, 31, endpoint=False) # print(x)
-
-
-# Temp code dev area:
-# Y = np.empty([N, 64, 34], dtype = float)
-# if verbose: print(f'''Output array shape: {Y.shape}''')# channels = np.linspace(0,63,64)
-# print(np.reshape(channels, (-1,8)))
-# exit(0)
-
-# good = np.zeros(9, dtype=np.int32)
-
-selected = (18, 19, 20, 26, 27, 28, 34, 35, 36)
+x  = np.linspace(0, 31, 31, endpoint=False)
 
 first           = True
 output_array    = None
+
+cnt_bad         = 0
+
+param_bounds=([0.0, 0.0, 1200.0],[10000.0, 30.0, 2000.0])
 
 for i in range(N): # loop over the data sample
     if (verbose and (i %100)==0): print(i)
     frame = X[i]
     wave = frame[channel][0:31]  # print(wave)
-    popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[gain, 7.0, 1500.0])
+
+    maxindex    =   np.argmax(wave)
+    maxval      =   wave[maxindex]
+
+    try:
+        popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[float(maxval-1580), float(maxindex), 1580.0], bounds = param_bounds)
+    except:
+        cnt_bad+=1
+        continue
+
     fit  = tempfit(x, *popt)
 
     # residual sum of squares
@@ -139,13 +145,18 @@ for i in range(N): # loop over the data sample
     r2 = 1 - (ss_res / ss_tot)
     if args.debug: print(str(popt[0])+', '+str(r2))
 
-    if r2<args.r2: continue
+    if r2<args.r2:
+        cnt_bad+=1
+        continue
+
+    # print(maxindex, maxval, popt, r2)
 
     buzz = np.std(wave-fit)
 
     # adding the "Y" vector: origin, peak value, pedestal, buzz
     result      = np.array(popt)
-    appended    = np.append(wave, np.append(result, buzz))
+    extra       = np.array([buzz, r2])
+    appended    = np.append(wave, np.append(result, extra))
 
     # print(appended)
 
@@ -155,7 +166,7 @@ for i in range(N): # loop over the data sample
     else:
         output_array = np.append(output_array,[appended], axis=0)
 
-if verbose: print(f'''Created an array: {output_array.shape}''')
+if verbose: print(f'''Created an array: {output_array.shape}, bad fits: {cnt_bad}''')
 
 # print(np.reshape(output_array, (-1,34)))
 
@@ -173,6 +184,7 @@ f.close()
 
 exit(0)
 
+# selected = (18, 19, 20, 26, 27, 28, 34, 35, 36)
 
 ### -- attic --
 # Some previous experimentation:

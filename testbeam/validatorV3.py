@@ -33,11 +33,14 @@ parser.add_argument("-G", "--graphicfile",  type=str,               help="Option
 
 parser.add_argument("-g", "--graphic",      action='store_true',	help="Display comparison graphic and exit")
 parser.add_argument("-v", "--verbose",      action='store_true',	help="Verbose mode")
+
+parser.add_argument("-i", "--inspect",      type=int,               help="Inspect results for this no. of elements in the array", default=0)
+
 parser.add_argument("-s", "--save",         type=str,	            help="If set, augment and save the original file", default='')
 
 parser.add_argument("-b", "--batch",        type=int,               help="Batch size for inference", default=32)
 
-parser.add_argument("-a", "--amp",     type=float, help="gain (guess)",        default=500.0)
+parser.add_argument("-a", "--amp",          type=float, help="gain (guess)",        default=500.0)
 
 # parser.add_argument("-T", "--timing",       action='store_true',	help="Time the model")
 
@@ -51,10 +54,11 @@ save        = args.save
 
 batch       = args.batch
 verbose     = args.verbose
+inspect     = args.inspect
 
 gain        = args.amp
 ################################################################
-
+np.set_printoptions(precision=2, linewidth=80)
 
 template = loadtxt('template.csv', delimiter=',')
 
@@ -80,7 +84,7 @@ L = 31 # len(dataset[0]) - 3 # the "y" vector: amplitude, time, pedestal
 
 # Split into input (X) and output (y) variables
 X = dataset[:,0:L]
-y = dataset[:,(L):(L+3)]
+y = dataset[:,(L):(L+5)] # the "y" vector: amplitude, time, pedestal, buzz, r2
 end = time.time()
 
 #for i in range(0,4): print(X[i], '!', y[i])
@@ -98,8 +102,10 @@ else:
 end = time.time()
 
 
-#for i in range(0,4): print(y[i], answer[i])
-#exit(0)
+
+if inspect>0:
+    for i in range(0,inspect): print(y[i], answer[i])
+    exit(0)
 
 
 if verb: print("Inference - elapsed time:", end-start)
