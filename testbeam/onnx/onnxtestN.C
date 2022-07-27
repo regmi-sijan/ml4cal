@@ -104,39 +104,77 @@ int main(int argc, char* argv[]) {
 
     Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
-
     std::vector<float> w31(inputTensorSize); // 31 bins in the test beam data
 
-    for (int i=0; i<N; i++) {
-        Int_t m = branch->GetEntry(i);
-        auto start = chrono::high_resolution_clock::now();
+    // Example:
+    // std::array<std::array<int, 3>, 3> arr = {{{5, 8, 2}, {8, 3, 1}, {5, 3, 9}}};
 
-        std::vector<int> inp;
-        inp.insert(inp.begin(), std::begin(waveform[channel]), std::end(waveform[channel]));
+    // std::array<std::array<float,31>, 2> arr = {{
+    //     {1554.0, 1558.0, 1555.0,  1564.0, 1558.0, 1555.0, 1556.0, 1554.0, 1750.0, 2284.0, 2424.0, 2116.0, 1838.0, 1713.0, 1649.0, 1613.0, 1601.0, 1589.0, 1583.0, 1578.0, 1572.0, 1574.0, 1573.0, 1569.0, 1567.0, 1562.0, 1563.0, 1560.0, 1561.0, 1557.0, 1557.0},
+    //     {1554.0, 1558.0, 1555.0,  1564.0, 1558.0, 1555.0, 1556.0, 1554.0, 1750.0, 2284.0, 2424.0, 2116.0, 1838.0, 1713.0, 1649.0, 1613.0, 1601.0, 1589.0, 1583.0, 1578.0, 1572.0, 1574.0, 1573.0, 1569.0, 1567.0, 1562.0, 1563.0, 1560.0, 1561.0, 1557.0, 1557.0}
+    // }};
+    
+    // for (auto &row: arr) {
+    //     for (auto &i: row) {
+    //         std::cout << i << ' ';
+    //     }
+    //     std::cout << std::endl;
+    // }
+    
 
-        std::transform(inp.begin(), inp.end()-1, w31.begin(), [](int x) {return (float)x;});
+    std::vector<float> arr = {
+        1554.0, 1558.0, 1555.0,  1564.0, 1558.0, 1555.0, 1556.0, 1554.0, 1750.0, 2284.0, 2424.0, 2116.0, 1838.0, 1713.0, 1649.0, 1613.0, 1601.0, 1589.0, 1583.0, 1578.0, 1572.0, 1574.0, 1573.0, 1569.0, 1567.0, 1562.0, 1563.0, 1560.0, 1561.0, 1557.0, 1557.0,
+        1554.0, 1558.0, 1555.0,  1564.0, 1558.0, 1555.0, 1556.0, 1554.0, 1750.0, 2284.0, 2424.0, 2116.0, 1838.0, 1713.0, 1649.0, 1613.0, 1601.0, 1589.0, 1583.0, 1578.0, 1572.0, 1574.0, 1573.0, 1569.0, 1567.0, 1562.0, 1563.0, 1560.0, 1561.0, 1557.0, 1557.0
+    };
 
-        inputTensors.push_back (Ort::Value::CreateTensor<float>(memoryInfo, w31.data(),                 inputTensorSize,    inputDims.data(),   inputDims.size()));
-        outputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, outputTensorValues.data(),  outputTensorSize, outputDims.data(),    outputDims.size()));
 
-        // core inference
-        oS->_session->Run(Ort::RunOptions{nullptr},
-            inputNames.data(),  inputTensors.data(),    1,
-            outputNames.data(), outputTensors.data(),   1);
+    std::vector<int64_t> inputDimsN     = {2,31};
+    std::vector<int64_t> outputDimsN    = {2,3};
+
+
+    std::vector<float>   outputTensorValuesN(6);
+// static Value Ort::Value::CreateTensor	(	const OrtMemoryInfo * 	info,
+//     T * 	p_data,
+//     size_t 	p_data_element_count,
+//     const int64_t * 	shape,
+//     size_t 	shape_len 
+//     )	
+
+
+    inputTensors.push_back (Ort::Value::CreateTensor<float>(memoryInfo, arr.data(), 62,    inputDimsN.data(),   inputDims.size()));
+    outputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, outputTensorValuesN.data(),  6, outputDimsN.data(),    outputDimsN.size()));
+    
+    cout << inputDims.size() << "!" << outputDimsN.size() << endl;
+
+    oS->_session->Run(Ort::RunOptions{nullptr},
+             inputNames.data(),  inputTensors.data(),    1,
+             outputNames.data(), outputTensors.data(),   1);
+
+
+    std::cout << outputTensorValues << std::endl;
+    // for (int i=0; i<N; i++) {
+    //     Int_t m = branch->GetEntry(i);
+    //     auto start = chrono::high_resolution_clock::now();
+
+    //     std::vector<int> inp;
+    //     inp.insert(inp.begin(), std::begin(waveform[channel]), std::end(waveform[channel]));
+
+    //     std::transform(inp.begin(), inp.end()-1, w31.begin(), [](int x) {return (float)x;});
+
+    //     inputTensors.push_back (Ort::Value::CreateTensor<float>(memoryInfo, w31.data(),                 inputTensorSize,    inputDims.data(),   inputDims.size()));
+    //     outputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, outputTensorValues.data(),  outputTensorSize, outputDims.data(),    outputDims.size()));
+
+    //     // core inference
+    //     oS->_session->Run(Ort::RunOptions{nullptr},
+    //         inputNames.data(),  inputTensors.data(),    1,
+    //         outputNames.data(), outputTensors.data(),   1);
         
-        auto stop = chrono::high_resolution_clock::now();
-        auto duration = chrono::duration_cast<microseconds>(stop - start);
-        cout << "Microseconds: " << duration.count() << endl;
+    //     auto stop = chrono::high_resolution_clock::now();
+    //     auto duration = chrono::duration_cast<microseconds>(stop - start);
+    //     cout << "Microseconds: " << duration.count() << endl;
         
-        std::cout << outputTensorValues << std::endl;
-    }
+    //     std::cout << outputTensorValues << std::endl;
+    // }
     exit(0);
 }
 
-   //Declare container for input data: std::vector<float> inputTensorValues(inputTensorSize);
-        // if(verbose) {for(int bin=0; bin<32; bin++) {cout<< waveform[27][bin] << " ";} cout << endl; }
-        // cout << sizeof(waveform[27]) <<endl;
-        // vector<float> a[31];
-        // for(int bin=0; bin<31; bin++) {inputTensorValues[bin] = (float) waveform[27][bin];} // low-tech way of conversion
-//  memoryInfo, inputTensorValues.data(), inputTensorSize, inputDims.data(),
-//            memoryInfo, w31.data(), inputTensorSize, inputDims.data(),         

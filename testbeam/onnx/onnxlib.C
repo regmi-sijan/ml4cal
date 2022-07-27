@@ -2,11 +2,12 @@
 #include "onnxlib.h"
 
 OnnxSession::OnnxSession(const char* modelFilepath, const char* envName) {
+
     Ort::Env env(OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING, envName);
     Ort::SessionOptions sessionOptions;
     sessionOptions.SetGraphOptimizationLevel(GraphOptimizationLevel::ORT_ENABLE_EXTENDED);
-    _session = new Ort::Session(env, modelFilepath, sessionOptions);
 
+    _session = new Ort::Session(env, modelFilepath, sessionOptions);
 
     Ort::AllocatorWithDefaultOptions allocator;
 
