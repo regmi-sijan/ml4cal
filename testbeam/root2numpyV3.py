@@ -117,7 +117,7 @@ output_array    = None
 
 cnt_bad         = 0
 
-param_bounds=([0.0, 0.0, 1200.0],[10000.0, 30.0, 2000.0])
+param_bounds=([20.0, 2.0, 1200.0],[12000.0, 28.0, 2200.0])
 
 for i in range(N): # loop over the data sample
     if (verbose and (i %100)==0): print(i)
@@ -153,12 +153,9 @@ for i in range(N): # loop over the data sample
 
     buzz = np.std(wave-fit)
 
-    # adding the "Y" vector: origin, peak value, pedestal, buzz
-    result      = np.array(popt)
-    extra       = np.array([buzz, r2])
-    appended    = np.append(wave, np.append(result, extra))
-
-    # print(appended)
+    # adding the "Y" vector: origin, peak value, pedestal, r2
+    result      = np.array(popt)   # For two or more extra elements, use this to append: extra = np.array([buzz, r2])
+    appended    = np.append(wave, result)
 
     if first:
         output_array = np.array([appended])
@@ -167,8 +164,6 @@ for i in range(N): # loop over the data sample
         output_array = np.append(output_array,[appended], axis=0)
 
 if verbose: print(f'''Created an array: {output_array.shape}, bad fits: {cnt_bad}''')
-
-# print(np.reshape(output_array, (-1,34)))
 
 if(outfile == ''): exit(0)
 
@@ -184,9 +179,14 @@ f.close()
 
 exit(0)
 
-# selected = (18, 19, 20, 26, 27, 28, 34, 35, 36)
 
+####################################################
 ### -- attic --
+# Well populated channels:
+# selected = (18, 19, 20, 26, 27, 28, 34, 35, 36)
+#
+# print(np.reshape(output_array, (-1,34)))
+
 # Some previous experimentation:
 # f = uproot.recreate(outfile)
 # f['test']=uproot.newtree({'branch': np.array([1,2,3])})

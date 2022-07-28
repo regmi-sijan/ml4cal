@@ -16,6 +16,7 @@ from keras.layers import Dense
 from keras.regularizers import l1
 
 from keras.constraints import unit_norm
+from keras.constraints import max_norm
 
 ################################
 def yes_or_no(question):
@@ -74,11 +75,11 @@ with open(infile, 'rb') as f: dataset = np.load(f)
 if verbose: print(f'''Read an array: {dataset.shape}''')
 
 
-L = 31 # len(dataset[0]) - 5 trailing numbers are "y"
+L = 31 # len(dataset[0]) - 4 trailing numbers are "y"
 
 # Split into input (X) and output (y) variables
 X = dataset[:,0:L]
-y = dataset[:,(L):(L+5)] # the "y" vector: amplitude, time, pedestal, buzz, r2
+y = dataset[:,(L):(L+3)] # the "y" vector: amplitude, time, pedestal
 
 if chatty:
     print(y.shape)
@@ -90,8 +91,8 @@ if chatty:
 
 # Define the Keras model
 model = Sequential()
-model.add(Dense(L, input_dim=L, activation='relu', kernel_constraint=unit_norm()))
-model.add(Dense(5, activation=act))
+model.add(Dense(L, input_dim=L, activation='relu', kernel_constraint=max_norm(3), bias_constraint=max_norm(3))) # , kernel_constraint=unit_norm()
+model.add(Dense(3, activation=act))
 
 # Compile the Keras model
 model.compile(loss=loss, optimizer=opt, metrics=['accuracy'])

@@ -84,7 +84,7 @@ L = 31 # len(dataset[0]) - 3 # the "y" vector: amplitude, time, pedestal
 
 # Split into input (X) and output (y) variables
 X = dataset[:,0:L]
-y = dataset[:,(L):(L+5)] # the "y" vector: amplitude, time, pedestal, buzz, r2
+y = dataset[:,(L):(L+3)] # the "y" vector: amplitude, time, pedestal
 end = time.time()
 
 #for i in range(0,4): print(X[i], '!', y[i])
