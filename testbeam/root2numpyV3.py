@@ -53,6 +53,7 @@ parser.add_argument("-r", "--r2",       type=float, help="R2 threshold",       d
 
 parser.add_argument("-v", "--verbose",  action='store_true',    help="Verbose mode")
 parser.add_argument("-z", "--zip",      action='store_true',    help="Store compressed")
+parser.add_argument("-s", "--short",    action='store_true',    help="Shorten the waveform")
 
 parser.add_argument("-d", "--debug",    action='store_true',    help="Debug mode")
 
@@ -119,13 +120,24 @@ cnt_bad         = 0
 
 param_bounds=([20.0, 2.0, 1200.0],[12000.0, 28.0, 2200.0])
 
+indices = range(3, 31, 3)
+
 for i in range(N): # loop over the data sample
     if (verbose and (i %100)==0): print(i)
     frame = X[i]
-    wave = frame[channel][0:31]  # print(wave)
+    wave = frame[channel][0:31]
+
+
+    if args.short:
+        wave = np.take(wave, indices)
+        x = np.arange(3, 31, 3)
+        #print(x)
+        #print(wave)
 
     maxindex    =   np.argmax(wave)
     maxval      =   wave[maxindex]
+    if args.short: maxindex = x[maxindex]
+
 
     try:
         popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[float(maxval-1580), float(maxindex), 1580.0], bounds = param_bounds)
@@ -149,13 +161,12 @@ for i in range(N): # loop over the data sample
         cnt_bad+=1
         continue
 
-    # print(maxindex, maxval, popt, r2)
-
-    buzz = np.std(wave-fit)
+    # Keep this as an option, for later...
+    # buzz = np.std(wave-fit)
 
     # adding the "Y" vector: origin, peak value, pedestal, r2
-    result      = np.array(popt)   # For two or more extra elements, use this to append: extra = np.array([buzz, r2])
-    appended    = np.append(wave, result)
+    # result      = np.array(popt)   # For two or more extra elements, use this to append: extra = np.array([buzz, r2])
+    appended    = np.append(wave, np.array(popt))
 
     if first:
         output_array = np.array([appended])
