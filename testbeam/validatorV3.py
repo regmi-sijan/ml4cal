@@ -80,7 +80,7 @@ start = time.time()
 
 with open(datafile, 'rb') as f: dataset = np.load(f)
 if verbose: print(f'''Read an array: {dataset.shape}''')
-L = 31 # len(dataset[0]) - 3 # the "y" vector: amplitude, time, pedestal
+L = len(dataset[0]) - 3 # the "y" vector: amplitude, time, pedestal
 
 # Split into input (X) and output (y) variables
 X = dataset[:,0:L]
