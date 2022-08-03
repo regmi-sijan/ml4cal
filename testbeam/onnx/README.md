@@ -2,6 +2,15 @@
 
 ## ONNX
 
+### Inspiration for the inference code
+
+https://github.com/leimao/ONNX-Runtime-Inference/tree/main/src
+
+The code by Lei Mao is evolving, an older version was used
+as a template to create the starting point for the signal
+extraction inference test.
+
+
 ### ONNX runtime binaries
 
 To make things easier, there is a copy of prefab binaries,

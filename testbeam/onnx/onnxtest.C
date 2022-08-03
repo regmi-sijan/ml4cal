@@ -25,6 +25,9 @@ using namespace std;
 using namespace std::chrono;
 
 
+// Based on the inference example by Lei Mao
+// https://github.com/leimao/ONNX-Runtime-Inference/blob/main/src/inference.cpp
+
 
 int main(int argc, char* argv[]) {
 
@@ -52,7 +55,7 @@ int main(int argc, char* argv[]) {
             ("Number of entries to process")                        
         | lyra::opt(channel, "channel")
             ["-c"]["--channel"]
-            ("Caloriemter channel")
+            ("Calorimeter channel")
         | lyra::help(help);
 
     auto result = cli.parse( { argc, argv } );
@@ -66,12 +69,14 @@ int main(int argc, char* argv[]) {
  
     std::string instanceName{"fit"};
 
-    OnnxSession* oS = new OnnxSession(modelfile.c_str(), instanceName.c_str());
+    OnnxSession* oS = new OnnxSession(modelfile.c_str(), instanceName.c_str()); // oS=="ONNX Session"
 
-    size_t numInputNodes = oS->_numInputNodes, numOutputNodes = oS->_numOutputNodes;
-    std::vector<int64_t> inputDims = oS->_inputDimensions, outputDims = oS->_outputDimensions;
+    size_t                      numInputNodes   = oS->_numInputNodes,   numOutputNodes  = oS->_numOutputNodes;
+    std::vector<int64_t>        inputDims       = oS->_inputDimensions, outputDims      = oS->_outputDimensions;
+    
     const char* inputName = oS->_inputName; const char* outputName = oS->_outputName;
-    ONNXTensorElementDataType inputType = oS->_inputType, outputType = oS->_outputType;
+    
+    ONNXTensorElementDataType   inputType       = oS->_inputType,       outputType      = oS->_outputType;
 
     if(verbose) {
         std::cout << "*** Input Nodes:\t"   << numInputNodes << ",\t\t Output Nodes: "  << numOutputNodes << std::endl;
