@@ -53,7 +53,8 @@ parser.add_argument("-r", "--r2",       type=float, help="R2 threshold",       d
 
 parser.add_argument("-v", "--verbose",  action='store_true',    help="Verbose mode")
 parser.add_argument("-z", "--zip",      action='store_true',    help="Store compressed")
-parser.add_argument("-s", "--short",    action='store_true',    help="Shorten the waveform")
+parser.add_argument("-s", "--short",    action='store_true',    help="Shorten the waveform (downsample)")
+parser.add_argument("-n", "--narrow",   action='store_true',    help="Narrow the waveform")
 
 parser.add_argument("-d", "--debug",    action='store_true',    help="Debug mode")
 
@@ -74,8 +75,8 @@ branchname  = 'waveform'
 channel     = args.channel
 gain        = args.gain
 
-
 #####################################
+
 np.set_printoptions(precision=3, linewidth=80)
 
 if(infile==''):
@@ -117,27 +118,39 @@ first           = True
 output_array    = None
 
 cnt_bad         = 0
+cnt_out         = 0
 
-param_bounds=([20.0, 2.0, 1200.0],[12000.0, 28.0, 2200.0])
+param_bounds=([20.0, 2.0, 1100.0],[14000.0, 28.0, 2400.0])
 
 indices = range(3, 31, 3)
 
 for i in range(N): # loop over the data sample
+    x  = np.linspace(0, 31, 31, endpoint=False)
     if (verbose and (i %100)==0): print(i)
     frame = X[i]
     wave = frame[channel][0:31]
 
 
     if args.short:
-        wave = np.take(wave, indices)
-        x = np.arange(3, 31, 3)
-        #print(x)
-        #print(wave)
+        wave    = np.take(wave, indices)
+        x       = np.arange(3, 31, 3)
+
 
     maxindex    =   np.argmax(wave)
     maxval      =   wave[maxindex]
+    
     if args.short: maxindex = x[maxindex]
 
+    if args.narrow:
+        if maxindex>25 or maxindex<5: # filter out outliers
+            cnt_out+=1
+            continue
+
+        selection = np.arange(maxindex-4, maxindex+6)
+        maxindex = x[maxindex]
+        wave    = np.take(wave, selection)
+        # x       = np.take(x, selection)
+        x       = selection
 
     try:
         popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[float(maxval-1580), float(maxindex), 1580.0], bounds = param_bounds)
@@ -145,27 +158,25 @@ for i in range(N): # loop over the data sample
         cnt_bad+=1
         continue
 
-    fit  = tempfit(x, *popt)
+    fit = tempfit(x, *popt)
 
-    # residual sum of squares
-    ss_res = np.sum((wave - fit) ** 2)
+    ss_res = np.sum((wave - fit) ** 2)              # residual sum of squares
+    ss_tot = np.sum((wave - np.mean(wave)) ** 2)    # total sum of squares
+    r2 = 1 - (ss_res / ss_tot)                      # r-squared
 
-    # total sum of squares
-    ss_tot = np.sum((wave - np.mean(wave)) ** 2)
-
-    # r-squared
-    r2 = 1 - (ss_res / ss_tot)
     if args.debug: print(str(popt[0])+', '+str(r2))
 
     if r2<args.r2:
         cnt_bad+=1
         continue
 
-    # Keep this as an option, for later...
-    # buzz = np.std(wave-fit)
+    # Keep this as an option, for later... buzz = np.std(wave-fit)
 
     # adding the "Y" vector: origin, peak value, pedestal, r2
     # result      = np.array(popt)   # For two or more extra elements, use this to append: extra = np.array([buzz, r2])
+
+    if args.narrow: popt[1]-=float(maxindex-4) # special case -- offset the wave since it was truncated on the left
+
     appended    = np.append(wave, np.array(popt))
 
     if first:
@@ -174,7 +185,10 @@ for i in range(N): # loop over the data sample
     else:
         output_array = np.append(output_array,[appended], axis=0)
 
-if verbose: print(f'''Created an array: {output_array.shape}, bad fits: {cnt_bad}''')
+if verbose:
+    print(f'''Bad fits counter: {cnt_bad}''')
+    if args.narrow: print(f'''Peak out of bounds counter: {cnt_out} ''')
+    print(f'''Created an output array: {output_array.shape}''')
 
 if(outfile == ''): exit(0)
 

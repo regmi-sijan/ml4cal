@@ -105,7 +105,69 @@ int main(int argc, char* argv[]) {
     Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
     std::vector<float> w31(inputTensorSize); // 31 bins in the test beam data
+    std::vector<float> input{}; //
 
+    std::vector<float> arr = {
+        1554.0, 1558.0, 1555.0, 1564.0, 1558.0, 1555.0, 1556.0, 1554.0, 1750.0, 2284.0, 2424.0, 2116.0, 1838.0, 1713.0, 1649.0, 1613.0, 1601.0, 1589.0, 1583.0, 1578.0, 1572.0, 1574.0, 1573.0, 1569.0, 1567.0, 1562.0, 1563.0, 1560.0, 1561.0, 1557.0, 1557.0,
+        1554.0, 1558.0, 1555.0, 1564.0, 1558.0, 1555.0, 1556.0, 1554.0, 1750.0, 2284.0, 2424.0, 2116.0, 1838.0, 1713.0, 1649.0, 1613.0, 1601.0, 1589.0, 1583.0, 1578.0, 1572.0, 1574.0, 1573.0, 1569.0, 1567.0, 1562.0, 1563.0, 1560.0, 1561.0, 1557.0, 1557.0,
+        1552.0, 1550.0, 1552.0, 1552.0, 1553.0, 1550.0, 1551.0, 1554.0, 1551.0, 1551.0, 1582.0, 2617.0, 4401.0, 4371.0, 3194.0, 2360.0, 2013.0, 1844.0, 1743.0, 1687.0, 1658.0, 1643.0, 1630.0, 1617.0, 1610.0, 1602.0, 1598.0, 1594.0, 1585.0, 1577.0
+    };
+
+
+    std::vector<int64_t> inputDimsN     = {3,31};
+    std::vector<int64_t> outputDimsN    = {3,3};
+
+
+    std::vector<float>   outputTensorValuesN(9);
+
+
+    inputTensors.push_back (Ort::Value::CreateTensor<float>(memoryInfo, arr.data(), 93,    inputDimsN.data(),   inputDims.size()));
+    outputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, outputTensorValuesN.data(),  9, outputDimsN.data(),    outputDimsN.size()));
+    
+    cout << inputDims.size() << "!" << outputDimsN.size() << endl;
+
+    oS->_session->Run(Ort::RunOptions{nullptr},
+             inputNames.data(),  inputTensors.data(),    1,
+             outputNames.data(), outputTensors.data(),   1);
+
+
+    std::cout << outputTensorValuesN << std::endl;
+    for (int i=0; i<N; i++) {
+        Int_t m = branch->GetEntry(i);
+        auto start = chrono::high_resolution_clock::now();
+
+        std::vector<int> inp;
+        inp.insert(inp.begin(), std::begin(waveform[channel]), std::end(waveform[channel]));
+
+        std::transform(inp.begin(), inp.end()-1, w31.begin(), [](int x) {return (float)x;});
+
+        input.insert(input.end(), w31.begin(), w31.end());
+
+    //     inputTensors.push_back (Ort::Value::CreateTensor<float>(memoryInfo, w31.data(),                 inputTensorSize,    inputDims.data(),   inputDims.size()));
+    //     outputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, outputTensorValues.data(),  outputTensorSize, outputDims.data(),    outputDims.size()));
+
+    //     // core inference
+    //     oS->_session->Run(Ort::RunOptions{nullptr},
+    //         inputNames.data(),  inputTensors.data(),    1,
+    //         outputNames.data(), outputTensors.data(),   1);
+        
+    //     auto stop = chrono::high_resolution_clock::now();
+    //     auto duration = chrono::duration_cast<microseconds>(stop - start);
+    //     cout << "Microseconds: " << duration.count() << endl;
+        
+    //     std::cout << outputTensorValues << std::endl;
+    }
+
+    std::cout << input << std::endl;
+    std::cout << input.size() << std::endl;
+
+    exit(0);
+}
+
+    
+    // ---------------------------------------------------------------------
+    // ATTIC:
+    //
     // Example:
     // std::array<std::array<int, 3>, 3> arr = {{{5, 8, 2}, {8, 3, 1}, {5, 3, 9}}};
 
@@ -121,61 +183,3 @@ int main(int argc, char* argv[]) {
     //     std::cout << std::endl;
     // }
     
-
-    std::vector<float> arr = {
-        1554.0, 1558.0, 1555.0, 1564.0, 1558.0, 1555.0, 1556.0, 1554.0, 1750.0, 2284.0, 2424.0, 2116.0, 1838.0, 1713.0, 1649.0, 1613.0, 1601.0, 1589.0, 1583.0, 1578.0, 1572.0, 1574.0, 1573.0, 1569.0, 1567.0, 1562.0, 1563.0, 1560.0, 1561.0, 1557.0, 1557.0,
-        1554.0, 1558.0, 1555.0, 1564.0, 1558.0, 1555.0, 1556.0, 1554.0, 1750.0, 2284.0, 2424.0, 2116.0, 1838.0, 1713.0, 1649.0, 1613.0, 1601.0, 1589.0, 1583.0, 1578.0, 1572.0, 1574.0, 1573.0, 1569.0, 1567.0, 1562.0, 1563.0, 1560.0, 1561.0, 1557.0, 1557.0,
-        1552.0, 1550.0, 1552.0, 1552.0, 1553.0, 1550.0, 1551.0, 1554.0, 1551.0, 1551.0, 1582.0, 2617.0, 4401.0, 4371.0, 3194.0, 2360.0, 2013.0, 1844.0, 1743.0, 1687.0, 1658.0, 1643.0, 1630.0, 1617.0, 1610.0, 1602.0, 1598.0, 1594.0, 1585.0, 1577.0
-    };
-
-
-    std::vector<int64_t> inputDimsN     = {3,31};
-    std::vector<int64_t> outputDimsN    = {3,3};
-
-
-    std::vector<float>   outputTensorValuesN(9);
-// static Value Ort::Value::CreateTensor	(	const OrtMemoryInfo * 	info,
-//     T * 	p_data,
-//     size_t 	p_data_element_count,
-//     const int64_t * 	shape,
-//     size_t 	shape_len 
-//     )	
-
-
-    inputTensors.push_back (Ort::Value::CreateTensor<float>(memoryInfo, arr.data(), 93,    inputDimsN.data(),   inputDims.size()));
-    outputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, outputTensorValuesN.data(),  9, outputDimsN.data(),    outputDimsN.size()));
-    
-    cout << inputDims.size() << "!" << outputDimsN.size() << endl;
-
-    oS->_session->Run(Ort::RunOptions{nullptr},
-             inputNames.data(),  inputTensors.data(),    1,
-             outputNames.data(), outputTensors.data(),   1);
-
-
-    std::cout << outputTensorValuesN << std::endl;
-    // for (int i=0; i<N; i++) {
-    //     Int_t m = branch->GetEntry(i);
-    //     auto start = chrono::high_resolution_clock::now();
-
-    //     std::vector<int> inp;
-    //     inp.insert(inp.begin(), std::begin(waveform[channel]), std::end(waveform[channel]));
-
-    //     std::transform(inp.begin(), inp.end()-1, w31.begin(), [](int x) {return (float)x;});
-
-    //     inputTensors.push_back (Ort::Value::CreateTensor<float>(memoryInfo, w31.data(),                 inputTensorSize,    inputDims.data(),   inputDims.size()));
-    //     outputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, outputTensorValues.data(),  outputTensorSize, outputDims.data(),    outputDims.size()));
-
-    //     // core inference
-    //     oS->_session->Run(Ort::RunOptions{nullptr},
-    //         inputNames.data(),  inputTensors.data(),    1,
-    //         outputNames.data(), outputTensors.data(),   1);
-        
-    //     auto stop = chrono::high_resolution_clock::now();
-    //     auto duration = chrono::duration_cast<microseconds>(stop - start);
-    //     cout << "Microseconds: " << duration.count() << endl;
-        
-    //     std::cout << outputTensorValues << std::endl;
-    // }
-    exit(0);
-}
-
