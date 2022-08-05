@@ -56,6 +56,8 @@ parser.add_argument("-c", "--channel",  type=int,   help="Channel",             
 parser.add_argument("-t", "--threshold",type=float, help="threshold",           default=0.0)
 parser.add_argument("-r", "--r2",       type=float, help="R2 threshold",        default=0.0)
 
+parser.add_argument("-f", "--normfactor", type=float, help="Normalization factor",default=1.0)
+
 parser.add_argument("-v", "--verbose",  action='store_true',    help="Verbose mode")
 parser.add_argument("-z", "--zip",      action='store_true',    help="Store compressed")
 parser.add_argument("-s", "--short",    action='store_true',    help="Shorten the waveform (downsample)")
@@ -83,6 +85,7 @@ channel     = args.channel
 threshold   = args.threshold
 
 normalize   = args.normalize
+nrm         = args.normfactor
 
 #####################################
 
@@ -129,11 +132,10 @@ x  = np.linspace(0, 31, 31, endpoint=False)
 cnt_bad, cnt_out, cnt_small, first, output_array = 0, 0, 0, True, None
 
 if normalize:
-    param_bounds=([0.001, 3.0, 0.3],[10.0, 19.0, 2.0])
-    nrm = 1000.0
+    param_bounds=([0.01, 3.0, 0.3],[10.0, 19.0, 2.5])
 else:
-    param_bounds=([20.0, 2.0, 1100.0],[14000.0, 28.0, 2400.0])
-    nrm = 1.0
+    param_bounds=([20.0, 3.0, 1100.0],[14000.0, 25.0, 2400.0])
+
 
 
 indices = range(3, 31, 3)
@@ -170,17 +172,24 @@ for i in range(N): # loop over the data sample
             cnt_out+=1
             continue
     
-    amp = float(maxval-1580)
+
+    # ped_guess = 1580
+    ped_guess = np.average(wave[0:5])
+
+    amp = float(maxval-ped_guess)
 
     if amp<threshold:
         cnt_small+=1
         continue
 
     # Core fit:
-    if normalize: wave = wave/nrm
+    if normalize:
+        wave        = wave/nrm
+        amp         = amp/nrm
+        ped_guess   = ped_guess/nrm
     
     try:
-        popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[amp/nrm, float(maxindex), 1580.0/nrm], bounds = param_bounds)
+        popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[amp, float(maxindex), ped_guess], bounds = param_bounds)
     except:
         cnt_bad+=1
         continue
@@ -206,6 +215,9 @@ for i in range(N): # loop over the data sample
     # result      = np.array(popt)   # For two or more extra elements, use this to append: extra = np.array([buzz, r2])
 
     if args.window: popt[1]-=float(maxindex-4) # special case -- offset the wave since it was truncated on the left
+
+    # Experimental:
+    # if normalize:   popt[1] = popt[1]/2.0
 
     result      = np.array(popt)
     appended    = np.append(wave, result)
