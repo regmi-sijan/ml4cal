@@ -32,20 +32,23 @@ def yes_or_no(question):
 parser = argparse.ArgumentParser()
 
 # I/O options
-parser.add_argument("-i", "--infile",   type=str,   help="Input file", default='')
-parser.add_argument("-s", "--savefile", type=str,   help="Filename to save the model", default='')
+parser.add_argument("-i",   "--infile",   type=str,   help="Input file", default='')
+parser.add_argument("-s",   "--savefile", type=str,   help="Filename to save the model", default='')
 
 # ML options
-parser.add_argument("-b", "--batch",    type=int,   help="Batch size",              default=10)
-parser.add_argument("-e", "--epoch",    type=int,   help="Epoch",                   default=100)
+parser.add_argument("-b",   "--batch",    type=int,   help="Batch size",              default=10)
+parser.add_argument("-e",   "--epoch",    type=int,   help="Epoch",                   default=100)
 
-parser.add_argument("-l", "--loss",     type=str,   help="Loss function", default='mse')
-parser.add_argument("-a","--activation",type=str,   help="Last layer activation", default='linear')
-parser.add_argument("-o", "--optimizer",type=str,   help="Optimizer", default='adam')
+parser.add_argument("-l",   "--loss",     type=str,   help="Loss function", default='mse')
 
-parser.add_argument("-v", "--verbose",  action='store_true',    help="Verbose mode")
+parser.add_argument("-1",   "--activation1",type=str,   help="Layer 1 activation", default='relu')
+parser.add_argument("-2",   "--activation2",type=str,   help="Layer 2 activation", default='linear')
 
-parser.add_argument("-c", "--chatty",  action='store_true',    help="Very verbose mode (chatty)")
+parser.add_argument("-o",   "--optimizer",type=str,   help="Optimizer", default='adam')
+
+parser.add_argument("-v",   "--verbose",  action='store_true',    help="Verbose mode")
+
+parser.add_argument("-c",   "--chatty",  action='store_true',    help="Very verbose mode (chatty)")
 
 args    = parser.parse_args()
 
@@ -56,7 +59,8 @@ save    = args.savefile
 batch   = args.batch
 epoch   = args.epoch
 loss    = args.loss
-act     = args.activation
+act1    = args.activation1
+act2    = args.activation2
 opt     = args.optimizer
 chatty  = args.chatty
 
@@ -77,6 +81,8 @@ if verbose: print(f'''Read an array: {dataset.shape}''')
 
 L = len(dataset[0]) - 3 # trailing numbers are "y"
 
+if verbose: print(f'''Input vector length: {L}''')
+
 # Split into input (X) and output (y) variables
 X = dataset[:,0:L]
 y = dataset[:,(L):(L+3)] # the "y" vector: amplitude, time, pedestal
@@ -91,8 +97,12 @@ if chatty:
 
 # Define the Keras model
 model = Sequential()
-model.add(Dense(L, input_dim=L, activation='relu', kernel_constraint=max_norm(3), bias_constraint=max_norm(3))) # , kernel_constraint=unit_norm()
-model.add(Dense(3, activation=act))
+model.add(Dense(L, input_dim=L, activation=act1)) # , kernel_constraint=max_norm(3), bias_constraint=max_norm(3))) # , kernel_constraint=unit_norm()
+#model.add(Dense(12, activation='relu'))
+#model.add(Dense(5, activation='linear'))
+model.add(Dense(3, activation=act2))
+
+# NB. 31, 9, 3, linear relu linear seem to work well.
 
 # Compile the Keras model
 model.compile(loss=loss, optimizer=opt, metrics=['accuracy'])

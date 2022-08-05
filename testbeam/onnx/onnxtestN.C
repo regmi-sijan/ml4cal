@@ -129,29 +129,11 @@ int main(int argc, char* argv[]) {
 
         std::vector<int> inp;
         inp.insert(inp.begin(), std::begin(waveform[channel]), std::end(waveform[channel]));
-
         std::transform(inp.begin(), inp.end()-1, w31.begin(), [](int x) {return (float)x;});
-
         input.insert(input.end(), w31.begin(), w31.end());
-
-    //     inputTensors.push_back (Ort::Value::CreateTensor<float>(memoryInfo, w31.data(),                 inputTensorSize,    inputDims.data(),   inputDims.size()));
-    //     outputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, outputTensorValues.data(),  outputTensorSize, outputDims.data(),    outputDims.size()));
-
-    //     // core inference
-    //     oS->_session->Run(Ort::RunOptions{nullptr},
-    //         inputNames.data(),  inputTensors.data(),    1,
-    //         outputNames.data(), outputTensors.data(),   1);
-        
-    //     auto stop = chrono::high_resolution_clock::now();
-    //     auto duration = chrono::duration_cast<microseconds>(stop - start);
-    //     cout << "Microseconds: " << duration.count() << endl;
-        
-    //     std::cout << outputTensorValues << std::endl;
     }
 
-    std::cout << input << std::endl;
-    std::cout << input.size() << std::endl;
-
+    std::cout << "Input size: " << input.size() << std::endl;
 
     inputTensors.push_back (Ort::Value::CreateTensor<float>(memoryInfo, input.data(),               N*31,   inputDimsN.data(),  inputDims.size()));
     outputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, outputTensorValuesN.data(), N*3,    outputDimsN.data(), outputDimsN.size()));
@@ -162,12 +144,19 @@ int main(int argc, char* argv[]) {
     auto duration = chrono::duration_cast<microseconds>(stop - start);
     cout << "Microseconds: " << duration.count() << endl;
 
-    //std::cout << outputTensorValuesN << std::endl;
+    for (int i=0; i<N*3; i=i+3) {
+        for (int k=0; k<3; k++) {
+            cout << outputTensorValuesN[i+k] << " ";
+        }
+        cout << endl;
+    }
+
+    std::cout << "Output size:" << outputTensorValuesN.size() << std::endl;
+
 
 
     exit(0);
 }
-
     
     // ---------------------------------------------------------------------
     // ATTIC:

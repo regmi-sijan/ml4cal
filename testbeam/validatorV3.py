@@ -45,7 +45,7 @@ parser.add_argument("-a", "--amp",          type=float, help="gain (guess)",    
 # parser.add_argument("-T", "--timing",       action='store_true',	help="Time the model")
 
 ################################################################
-args    = parser.parse_args()
+args        = parser.parse_args()
 
 datafile    = args.datafile
 modelfile   = args.modelfile
@@ -58,6 +58,7 @@ inspect     = args.inspect
 
 gain        = args.amp
 ################################################################
+
 np.set_printoptions(precision=2, linewidth=80)
 
 template = loadtxt('template.csv', delimiter=',')
@@ -70,9 +71,9 @@ if datafile == '':
     print('Please specify the input data file name')
     exit(-1)
 
-start = time.time()
+start   = time.time()
 model   = load_model(modelfile)
-end = time.time()
+end     = time.time()
 
 if verb: print("Model load - elapsed time:", end-start)
 
@@ -104,7 +105,7 @@ end = time.time()
 
 
 if inspect>0:
-    for i in range(0,inspect): print(y[i], answer[i])
+    for i in range(0,inspect): print(X[i], y[i], answer[i])
     exit(0)
 
 
