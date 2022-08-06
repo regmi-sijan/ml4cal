@@ -112,13 +112,21 @@ if inspect>0:
 if verb: print("Inference - elapsed time:", end-start)
 if verb: print(f'''Answer shape: {answer.shape}''')
 
-labels = ['amplitude', 'time', 'pedestal',]
+labels = [
+    'amplitude',
+    'time     ',
+    'pedestal',
+    ]
+
 diff = answer - y
 
-print('Average and Standard deviation values (ML)')
-for i in range(0,3): print(labels[i], np.average(diff[:,i]), np.std(diff[:,i]))
+print('-------------------------------------------------\n\nAverage and Standard deviation values\n')
+for i in range(0,3):
+    txt = "\t{number:8.4f}"
+    print(labels[i], txt.format(number = np.average(diff[:,i])), txt.format(number = np.std(diff[:,i])))
 
-print('Average aplitude', np.average(y[:, 0]))
+print('\n-------------------------------------------------\n')
+print('Average amplitude', np.average(y[:, 0]))
 
 if (save==''):
     if verb: print("No output file specified for the augmented data, will exit now...")
