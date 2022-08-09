@@ -1,3 +1,4 @@
+all: onnxtest onnxtestN
 onnxtest: onnxtest.C onnxlib.so onnxlib.h onnxutil.h
 	g++ onnxtest.C ./onnxlib.so $(shell root-config --glibs --cflags --libs) ${OFFLINE_MAIN}/lib64/libonnxruntime.so -o onnxtest
 
