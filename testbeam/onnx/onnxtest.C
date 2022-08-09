@@ -71,17 +71,12 @@ int main(int argc, char* argv[]) {
 
     OnnxSession* oS = new OnnxSession(modelfile.c_str(), instanceName.c_str()); // oS=="ONNX Session"
 
-    size_t                      numInputNodes   = oS->_numInputNodes,   numOutputNodes  = oS->_numOutputNodes;
     std::vector<int64_t>        inputDims       = oS->_inputDimensions, outputDims      = oS->_outputDimensions;
-    
-    const char* inputName = oS->_inputName; const char* outputName = oS->_outputName;
-    
-    ONNXTensorElementDataType   inputType       = oS->_inputType,       outputType      = oS->_outputType;
 
     if(verbose) {
-        std::cout << "*** Input Nodes:\t"   << numInputNodes << ",\t\t Output Nodes: "  << numOutputNodes << std::endl;
-        std::cout << "*** Input Name:\t\t"  << inputName     << ",\t Input Type: "      << inputType  << ",\t Input Dimensions:\t"  << inputDims    << std::endl;
-        std::cout << "*** Output Name:\t"   << outputName    << ",\t Output Type: "     << outputType << ",\t Output Dimensions:\t" << outputDims   << std::endl;
+        std::cout << "*** Input Nodes:\t"   << oS->numInputNodes()  << ",\t\t Output Nodes: "  << oS->numOutputNodes() << std::endl;
+        std::cout << "*** Input Name:\t\t"  << oS->inputName()      << ",\t Input Type: "      << oS->inputType()  << ",\t Input Dimensions:\t"  << inputDims    << std::endl;
+        std::cout << "*** Output Name:\t"   << oS->outputName()     << ",\t Output Type: "     << oS->outputType() << ",\t Output Dimensions:\t" << outputDims   << std::endl;
     }
 
 
@@ -104,7 +99,7 @@ int main(int argc, char* argv[]) {
 
     std::vector<float>          outputTensorValues(outputTensorSize);
 
-    std::vector<const char*>    inputNames{inputName}, outputNames{outputName};
+    std::vector<const char*>    inputNames{oS->inputName()}, outputNames{oS->outputName()};
     std::vector<Ort::Value>     inputTensors, outputTensors;
 
     Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);

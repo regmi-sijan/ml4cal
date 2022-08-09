@@ -33,3 +33,12 @@ OnnxSession::OnnxSession(const char* modelFilepath, const char* envName) {
     _outputDimensions = outputTensorInfo.GetShape();
     _outputDimensions[0] = 1; // fixing feature/bug in ONNX
 }
+
+const char* OnnxSession::inputName(void) {return _inputName;}
+const char* OnnxSession::outputName(void) {return _outputName;}
+
+size_t OnnxSession::numInputNodes(void) {return _numInputNodes;}
+size_t OnnxSession::numOutputNodes(void) {return _numOutputNodes;}
+
+ONNXTensorElementDataType OnnxSession::inputType(void) {return _inputType;}
+ONNXTensorElementDataType OnnxSession::outputType(void) {return _outputType;}
