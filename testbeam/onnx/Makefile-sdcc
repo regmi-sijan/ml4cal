@@ -1,4 +1,5 @@
 all: onnxtest onnxtestN
+
 onnxtest: onnxtest.C onnxlib.so onnxlib.h onnxutil.h
 	g++ onnxtest.C ./onnxlib.so $(shell root-config --glibs --cflags --libs) ${OFFLINE_MAIN}/lib64/libonnxruntime.so -o onnxtest
 
@@ -7,3 +8,6 @@ onnxtestN: onnxtestN.C onnxlib.so onnxlib.h onnxutil.h
 
 onnxlib.so: onnxlib.C onnxlib.h
 	g++ onnxlib.C -fPIC -shared ${OFFLINE_MAIN}/lib64/libonnxruntime.so -o onnxlib.so
+
+clean:
+	rm onnxtest onnxtestN onnxlib.so
