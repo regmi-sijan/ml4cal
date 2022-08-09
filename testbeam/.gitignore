@@ -6,6 +6,7 @@
 *.onnx
 # test binaries
 *test
+*testN
 # numpy arrays
 *.npy
 *.npz
