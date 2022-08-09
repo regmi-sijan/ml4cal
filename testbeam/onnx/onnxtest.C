@@ -119,7 +119,7 @@ int main(int argc, char* argv[]) {
         std::vector<int> inp;
         inp.insert(inp.begin(), std::begin(waveform[channel]), std::end(waveform[channel]));
 
-        std::transform(inp.begin(), inp.end()-1, w31.begin(), [](int x) {return (float)x;});
+        std::transform(inp.begin(), inp.end()-1, w31.begin(), [](int x) {return ((float)x)/1000.0;});
 
         inputTensors.push_back (Ort::Value::CreateTensor<float>(memoryInfo, w31.data(),                 inputTensorSize,    inputDims.data(),   inputDims.size()));
         outputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, outputTensorValues.data(),  outputTensorSize, outputDims.data(),    outputDims.size()));

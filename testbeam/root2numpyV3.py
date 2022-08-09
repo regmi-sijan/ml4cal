@@ -176,18 +176,18 @@ for i in range(N): # loop over the data sample
     # ped_guess = 1580
     ped_guess = np.average(wave[0:5])
 
+ 
+    # Core fit:
+    if normalize:
+        wave        = wave/nrm
+        maxval      = maxval/nrm
+        ped_guess   = ped_guess/nrm
+    
     amp = float(maxval-ped_guess)
 
     if amp<threshold:
         cnt_small+=1
         continue
-
-    # Core fit:
-    if normalize:
-        wave        = wave/nrm
-        amp         = amp/nrm
-        ped_guess   = ped_guess/nrm
-    
     try:
         popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[amp, float(maxindex), ped_guess], bounds = param_bounds)
     except:

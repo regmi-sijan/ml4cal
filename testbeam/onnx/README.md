@@ -30,7 +30,7 @@ this easily.
 
 There is a `Makefile` for building the test application. It will
 access the environment variables set as described above. The resulting
-executable is names `onnxtext`.
+executable is named `onnxtest`.
 
 ```bash
 # An example of the 'onnxtest' run:
@@ -44,6 +44,9 @@ one can use the `help` option to get information about the CLI:
 onnxtest --help
 ```
 
+THe batch mode of the inference process is tested using a modified version of `onnxtext`,
+named `onnxtextN`.
+
 ### ONNX Conversion
 
 ```bash
@@ -53,6 +56,12 @@ pip install tf2onnx
 # Convert an existing model
 python -m tf2onnx.convert --saved-model ./16_ch27 --output tfmodel.onnx
 ```
+
+There are multiple CLI options that affect the behavior of the conversion module,
+these need to be studied carefully. Caveat -- the names of the NN layers do matter,
+and they may be affected during the conversion process, so some debugging may be
+in order.
+
 
 ## Setting up ROOT (if necessary)
 
