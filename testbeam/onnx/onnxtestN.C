@@ -1,5 +1,3 @@
-#include <onnxruntime_cxx_api.h>
-
 using namespace std;
 
 #include <chrono>
@@ -19,8 +17,9 @@ using namespace std;
 #include "TTree.h"
 
 #include "lyra.hpp"
-#include "onnxutil.h"
 #include "onnxlib.h"
+#include "onnxutil.h"
+
 
 using namespace std::chrono;
 
@@ -30,6 +29,7 @@ int main(int argc, char* argv[]) {
 
     bool help               = false;
     bool verbose            = false;
+    bool output             = false;
 
     int N                   = 0;
     int channel             = 27;
@@ -41,6 +41,9 @@ int main(int argc, char* argv[]) {
         | lyra::opt(verbose)
             ["-v"]["--verbose"]
             ("Verbose mode")
+        | lyra::opt(output)
+            ["-o"]["--output"]
+            ("Print inference output")            
         | lyra::opt(modelfile, "model" )
             ["-m"]["--model"]
             ("File containing the ONNX model")
@@ -57,18 +60,16 @@ int main(int argc, char* argv[]) {
 
     auto result = cli.parse( { argc, argv } );
     if( !result ) {std::cerr << "Error in command line: " << result.errorMessage() << std::endl;exit(1);}
+
     if(help) {std::cout << cli << std::endl; exit(0);}
 
-    if(verbose) {
-        std::cout << "*** Verbose mode selected" << std::endl << "*** Model file: " << modelfile << std::endl;
-        std::cout << "*** ROOT file: " << rootfile << std::endl;
-    }
+    if(verbose) {std::cout << "*** Verbose mode selected" << std::endl << "*** Model file: " << modelfile << std::endl << "*** ROOT file: " << rootfile << std::endl;}
  
     std::string instanceName{"fit"};
 
-    OnnxSession* oS = new OnnxSession(modelfile.c_str(), instanceName.c_str());
+    OnnxSession* oS = new OnnxSession(modelfile.c_str(), instanceName.c_str(), 10);
 
-    std::vector<int64_t> inputDims = oS->_inputDimensions, outputDims = oS->_outputDimensions;
+    std::vector<int64_t> inputDims = oS->inputDimensions(), outputDims = oS->outputDimensions();
 
 
     if(verbose) {
@@ -100,9 +101,9 @@ int main(int argc, char* argv[]) {
     std::vector<const char*>    inputNames{oS->inputName()}, outputNames{oS->outputName()};
     std::vector<Ort::Value>     inputTensors, outputTensors;
 
-    Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
+    // Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
-    std::vector<float> w31(inputTensorSize); // 31 bins in the test beam data
+    std::vector<float> w31(31); // 31 bins in the test beam data; was inputTensorSize
     std::vector<float> input{}; //
 
 
@@ -124,15 +125,17 @@ int main(int argc, char* argv[]) {
     std::cout << "Input size: " << input.size() << std::endl;
 
     auto start = chrono::high_resolution_clock::now();
-    inputTensors.push_back (Ort::Value::CreateTensor<float>(memoryInfo, input.data(),               N*31,   inputDimsN.data(),  inputDims.size()));
-    outputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, outputTensorValuesN.data(), N*3,    outputDimsN.data(), outputDimsN.size()));
+    inputTensors.push_back (Ort::Value::CreateTensor<float>(oS->memoryInfo, input.data(),               N*31,   inputDimsN.data(),  inputDimsN.size()));
+    outputTensors.push_back(Ort::Value::CreateTensor<float>(oS->memoryInfo, outputTensorValuesN.data(), N*3,    outputDimsN.data(), outputDimsN.size()));
 
     oS->_session->Run(Ort::RunOptions{nullptr}, inputNames.data(), inputTensors.data(), 1, outputNames.data(), outputTensors.data(), 1);
     auto stop = chrono::high_resolution_clock::now();
     auto duration = chrono::duration_cast<microseconds>(stop - start);
     cout << "Microseconds: " << duration.count() << endl;
 
-    // for (int i=0; i<N*3; i=i+3) {for (int k=0; k<3; k++) {cout << outputTensorValuesN[i+k] << " ";} cout << endl;}
+    if(output) {
+        for (int i=0; i<N*3; i=i+3) {for (int k=0; k<3; k++) {cout << outputTensorValuesN[i+k] << " ";} cout << endl;}
+    }
 
     // std::cout << "Output size:" << outputTensorValuesN.size() << std::endl;
 

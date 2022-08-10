@@ -1,7 +1,7 @@
-all: onnxtest onnxtestN
+all: onnxtestN
 
-onnxtest: onnxtest.C onnxlib.so onnxlib.h onnxutil.h
-	g++ onnxtest.C ./onnxlib.so $(shell root-config --glibs --cflags --libs) ${OFFLINE_MAIN}/lib64/libonnxruntime.so -o onnxtest
+#onnxtest: onnxtest.C onnxlib.so onnxlib.h onnxutil.h
+#	g++ onnxtest.C ./onnxlib.so $(shell root-config --glibs --cflags --libs) ${OFFLINE_MAIN}/lib64/libonnxruntime.so -o onnxtest
 
 onnxtestN: onnxtestN.C onnxlib.so onnxlib.h onnxutil.h
 	g++ onnxtestN.C ./onnxlib.so $(shell root-config --glibs --cflags --libs) ${OFFLINE_MAIN}/lib64/libonnxruntime.so -o onnxtestN

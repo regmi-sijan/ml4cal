@@ -1,7 +1,8 @@
-#include <onnxruntime_cxx_api.h>
 #include "onnxlib.h"
 
-OnnxSession::OnnxSession(const char* modelFilepath, const char* envName) {
+OnnxSession::OnnxSession(const char* modelFilepath, const char* envName, int N) {
+
+    _N = N;
 
     Ort::Env env(OrtLoggingLevel::ORT_LOGGING_LEVEL_WARNING, envName);
     Ort::SessionOptions sessionOptions;
@@ -34,11 +35,14 @@ OnnxSession::OnnxSession(const char* modelFilepath, const char* envName) {
     _outputDimensions[0] = 1; // fixing feature/bug in ONNX
 }
 
-const char* OnnxSession::inputName(void) {return _inputName;}
-const char* OnnxSession::outputName(void) {return _outputName;}
+const char* OnnxSession::inputName(void)                    {return _inputName;}
+const char* OnnxSession::outputName(void)                   {return _outputName;}
 
-size_t OnnxSession::numInputNodes(void) {return _numInputNodes;}
-size_t OnnxSession::numOutputNodes(void) {return _numOutputNodes;}
+size_t OnnxSession::numInputNodes(void)                     {return _numInputNodes;}
+size_t OnnxSession::numOutputNodes(void)                    {return _numOutputNodes;}
 
-ONNXTensorElementDataType OnnxSession::inputType(void) {return _inputType;}
-ONNXTensorElementDataType OnnxSession::outputType(void) {return _outputType;}
+std::vector<int64_t>  OnnxSession::inputDimensions(void)    {return _inputDimensions;}
+std::vector<int64_t>  OnnxSession::outputDimensions(void)   {return _outputDimensions;}
+
+ONNXTensorElementDataType OnnxSession::inputType(void)      {return _inputType;}
+ONNXTensorElementDataType OnnxSession::outputType(void)     {return _outputType;}

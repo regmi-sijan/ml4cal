@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
     Int_t waveform[64][32];
     branch->SetAddress(&waveform);      // will read into this array
     Long64_t n = branch->GetEntries();  // number of entries in the branch
-    if( N==0 || N>n ) { N=n; }          // decide how many to process, 0=all
+    if( N==0 || N>n ) { N=n;}          // decide how many to process, 0=all
 
     if(verbose) { std::cout << "*** Number of entries in the file: " << n << ", Number of entries to be processed: " << N << std::endl; }
 
@@ -102,7 +102,7 @@ int main(int argc, char* argv[]) {
     std::vector<const char*>    inputNames{oS->inputName()}, outputNames{oS->outputName()};
     std::vector<Ort::Value>     inputTensors, outputTensors;
 
-    Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
+    // Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
 
     std::vector<float> w31(inputTensorSize); // 31 bins in the test beam data
@@ -116,8 +116,8 @@ int main(int argc, char* argv[]) {
 
         std::transform(inp.begin(), inp.end()-1, w31.begin(), [](int x) {return ((float)x)/1000.0;});
 
-        inputTensors.push_back (Ort::Value::CreateTensor<float>(memoryInfo, w31.data(),                 inputTensorSize,    inputDims.data(),   inputDims.size()));
-        outputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, outputTensorValues.data(),  outputTensorSize, outputDims.data(),    outputDims.size()));
+        inputTensors.push_back (Ort::Value::CreateTensor<float>(oS->memoryInfo, w31.data(),                 inputTensorSize,    inputDims.data(),   inputDims.size()));
+        outputTensors.push_back(Ort::Value::CreateTensor<float>(oS->memoryInfo, outputTensorValues.data(),  outputTensorSize, outputDims.data(),    outputDims.size()));
 
         // core inference
         oS->_session->Run(Ort::RunOptions{nullptr},
