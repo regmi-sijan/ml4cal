@@ -69,9 +69,10 @@ int main(int argc, char* argv[]) {
  
     std::string instanceName{"fit"};
 
-    OnnxSession* oS = new OnnxSession(modelfile.c_str(), instanceName.c_str()); // oS=="ONNX Session"
+    OnnxSession* oS = new OnnxSession(modelfile.c_str(), instanceName.c_str(), 1); // oS=="ONNX Session"
 
-    std::vector<int64_t>        inputDims       = oS->_inputDimensions, outputDims      = oS->_outputDimensions;
+
+    std::vector<int64_t> inputDims = oS->inputDimensions(), outputDims = oS->outputDimensions();
 
     if(verbose) {
         std::cout << "*** Input Nodes:\t"   << oS->numInputNodes()  << ",\t\t Output Nodes: "  << oS->numOutputNodes() << std::endl;
@@ -102,10 +103,9 @@ int main(int argc, char* argv[]) {
     std::vector<const char*>    inputNames{oS->inputName()}, outputNames{oS->outputName()};
     std::vector<Ort::Value>     inputTensors, outputTensors;
 
-    // Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
-
-
     std::vector<float> w31(inputTensorSize); // 31 bins in the test beam data
+
+    // Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
     for (int i=0; i<N; i++) {
         Int_t m = branch->GetEntry(i);
@@ -115,13 +115,20 @@ int main(int argc, char* argv[]) {
         inp.insert(inp.begin(), std::begin(waveform[channel]), std::end(waveform[channel]));
 
         std::transform(inp.begin(), inp.end()-1, w31.begin(), [](int x) {return ((float)x)/1000.0;});
+        
+        oS->_inputTensors.clear();
+        
+        oS->_inputTensors.push_back(Ort::Value::CreateTensor<float>(oS->_memoryInfo, w31.data(), inputTensorSize, inputDims.data(), inputDims.size()));
+ 
+        if(verbose) {cout << "Input tensors number: " << oS->_inputTensors.size() << endl;}
 
-        inputTensors.push_back (Ort::Value::CreateTensor<float>(oS->memoryInfo, w31.data(),                 inputTensorSize,    inputDims.data(),   inputDims.size()));
-        outputTensors.push_back(Ort::Value::CreateTensor<float>(oS->memoryInfo, outputTensorValues.data(),  outputTensorSize, outputDims.data(),    outputDims.size()));
+        outputTensors.clear();
+        outputTensors.push_back(Ort::Value::CreateTensor<float>(oS->_memoryInfo, outputTensorValues.data(),  outputTensorSize,   outputDims.data(),  outputDims.size()));
 
+        
         // core inference
         oS->_session->Run(Ort::RunOptions{nullptr},
-            inputNames.data(),  inputTensors.data(),    1,
+            inputNames.data(),  (oS->_inputTensors).data(),    1,            
             outputNames.data(), outputTensors.data(),   1);
         
         auto stop = chrono::high_resolution_clock::now();

@@ -1,3 +1,4 @@
+#include <iostream>
 #include "onnxlib.h"
 
 OnnxSession::OnnxSession(const char* modelFilepath, const char* envName, int N) {
@@ -11,6 +12,8 @@ OnnxSession::OnnxSession(const char* modelFilepath, const char* envName, int N) 
     _session = new Ort::Session(env, modelFilepath, sessionOptions);
 
     Ort::AllocatorWithDefaultOptions allocator;
+
+    // _memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
     _numInputNodes              = _session->GetInputCount();
     _numOutputNodes             = _session->GetOutputCount();
@@ -46,3 +49,17 @@ std::vector<int64_t>  OnnxSession::outputDimensions(void)   {return _outputDimen
 
 ONNXTensorElementDataType OnnxSession::inputType(void)      {return _inputType;}
 ONNXTensorElementDataType OnnxSession::outputType(void)     {return _outputType;}
+
+void OnnxSession::loadData(std::vector<float> inputData, size_t inputTensorSize) {
+    std::cout<<"hello"<<":"<< _memoryInfo << std::endl;
+    // _inputTensors.clear();
+    for(int i=0; i<31; i++) {std::cout << inputData.data()[i] <<" ";} std::cout << std::endl;
+    //std::cout <<  _inputDimensions.data()[1] << ":" << _inputDimensions.size() << ":"<< inputTensorSize<< std::endl;
+    _inputTensors.push_back(Ort::Value::CreateTensor<float>(_memoryInfo, inputData.data(), inputTensorSize, _inputDimensions.data(), _inputDimensions.size()));    
+}
+
+void prep(Ort::MemoryInfo &memoryInfo, std::vector<float> inputData, std::vector<Ort::Value> &inputTensors, std::vector<int64_t> inputDims) {
+    inputTensors.clear();
+    inputTensors.push_back(Ort::Value::CreateTensor<float>(memoryInfo, inputData.data(),  31,   inputDims.data(), inputDims.size()));
+}
+

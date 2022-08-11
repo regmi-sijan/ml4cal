@@ -101,7 +101,6 @@ int main(int argc, char* argv[]) {
     std::vector<const char*>    inputNames{oS->inputName()}, outputNames{oS->outputName()};
     std::vector<Ort::Value>     inputTensors, outputTensors;
 
-    // Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
     std::vector<float> w31(31); // 31 bins in the test beam data; was inputTensorSize
     std::vector<float> input{}; //
@@ -125,8 +124,8 @@ int main(int argc, char* argv[]) {
     std::cout << "Input size: " << input.size() << std::endl;
 
     auto start = chrono::high_resolution_clock::now();
-    inputTensors.push_back (Ort::Value::CreateTensor<float>(oS->memoryInfo, input.data(),               N*31,   inputDimsN.data(),  inputDimsN.size()));
-    outputTensors.push_back(Ort::Value::CreateTensor<float>(oS->memoryInfo, outputTensorValuesN.data(), N*3,    outputDimsN.data(), outputDimsN.size()));
+    inputTensors.push_back (Ort::Value::CreateTensor<float>(oS->_memoryInfo, input.data(),               N*31,   inputDimsN.data(),  inputDimsN.size()));
+    outputTensors.push_back(Ort::Value::CreateTensor<float>(oS->_memoryInfo, outputTensorValuesN.data(), N*3,    outputDimsN.data(), outputDimsN.size()));
 
     oS->_session->Run(Ort::RunOptions{nullptr}, inputNames.data(), inputTensors.data(), 1, outputNames.data(), outputTensors.data(), 1);
     auto stop = chrono::high_resolution_clock::now();
