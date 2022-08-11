@@ -3,7 +3,8 @@
 #ifndef ONNXLIB_H
 #define ONNXLIB_H
 
+// This is a stub for some ONNX code refactoring
 
-// This is a stub for some ONNC code refactoring
+void onnx(std::string &modelfile, std::vector<float> &input);
 
 #endif

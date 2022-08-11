@@ -96,6 +96,7 @@ int main(int argc, char* argv[]) {
 
     std::cout << "Input size: " << input.size() << std::endl;
 
+    onnx(modelfile, input);
 
     exit(0);
 }
