@@ -17,7 +17,7 @@ using namespace std;
 #include "TTree.h"
 
 #include "lyra.hpp"
-#include "onnxlib.h"
+#include "onnxsession.h"
 #include "onnxutil.h"
 
 

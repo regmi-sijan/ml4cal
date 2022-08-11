@@ -1,13 +1,13 @@
 all: onnxtestN onnxtest
 
-onnxtest: onnxtest.C onnxlib.so onnxlib.h onnxutil.h
-	g++ onnxtest.C ./onnxlib.so $(shell root-config --glibs --cflags --libs) -L ./onnxruntime-linux-x64-1.11.1/lib -lonnxruntime -o onnxtest
+onnxtest: onnxtest.C onnxsession.so onnxsession.h onnxutil.h
+	g++ onnxtest.C ./onnxsession.so $(shell root-config --glibs --cflags --libs) -L ./onnxruntime-linux-x64-1.11.1/lib -lonnxruntime -o onnxtest
 
-onnxtestN: onnxtestN.C onnxlib.so onnxlib.h onnxutil.h
-	g++ onnxtestN.C ./onnxlib.so $(shell root-config --glibs --cflags --libs) -L ./onnxruntime-linux-x64-1.11.1/lib -lonnxruntime -o onnxtestN
+onnxtestN: onnxtestN.C onnxsession.so onnxsession.h onnxutil.h
+	g++ onnxtestN.C ./onnxsession.so $(shell root-config --glibs --cflags --libs) -L ./onnxruntime-linux-x64-1.11.1/lib -lonnxruntime -o onnxtestN
 
-onnxlib.so: onnxlib.C onnxlib.h
-	g++ onnxlib.C -L ./onnxruntime-linux-x64-1.11.1/lib -lonnxruntime -fPIC -shared -o onnxlib.so
+onnxsession.so: onnxsession.C onnxsession.h
+	g++ onnxsession.C -L ./onnxruntime-linux-x64-1.11.1/lib -lonnxruntime -fPIC -shared -o onnxsession.so
 
 clean:
-	rm onnxtest onnxtestN onnxlib.so
+	rm onnxtest onnxtestN onnxsession.so

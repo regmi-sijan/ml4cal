@@ -20,7 +20,7 @@ using namespace std;
 
 #include "lyra.hpp"
 #include "onnxutil.h"
-#include "onnxlib.h"
+#include "onnxsession.h"
 
 using namespace std::chrono;
 
@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
 
     size_t inputTensorSize = vectorProduct(inputDims), outputTensorSize = vectorProduct(outputDims);
 
-    // Proceed to read the data from a ROOT tree:
+    // Proceed to read the data from a ROOT tree:inputten
     TFile f(TString(rootfile.c_str()));
     if (f.IsZombie()) { cout << "Error opening file" << endl; exit(-1);}
     if (verbose) { cout << "*** Input ROOT file " << rootfile << " has been opened" << endl;}
