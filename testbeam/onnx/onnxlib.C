@@ -2,7 +2,7 @@
 #include "onnxlib.h"
 
 
-void onnx(std::string &modelfile, std::vector<float> &input) {
+void onnx(std::string &modelfile, std::vector<float> &input, int N) {
     Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
 
@@ -16,7 +16,7 @@ void onnx(std::string &modelfile, std::vector<float> &input) {
 
     std::vector<Ort::Value>     inputTensors, outputTensors;
 
-    int N = input.size();
+    // int N = input.size();
 
     std::vector<int64_t> inputDimsN     = {N,31};
     std::vector<int64_t> outputDimsN    = {N,3};
@@ -31,7 +31,6 @@ void onnx(std::string &modelfile, std::vector<float> &input) {
 
     session->Run(Ort::RunOptions{nullptr}, inputNames.data(), inputTensors.data(), 1, outputNames.data(), outputTensors.data(), 1);
 
-    N=10;
     for (int i=0; i<N*3; i=i+3) {
         for (int k=0; k<3; k++) {std::cout << outputTensorValuesN[i+k] << " ";}
         std::cout << std::endl;

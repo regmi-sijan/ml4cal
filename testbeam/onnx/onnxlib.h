@@ -5,6 +5,6 @@
 
 // This is a stub for some ONNX code refactoring
 
-void onnx(std::string &modelfile, std::vector<float> &input);
+void onnx(std::string &modelfile, std::vector<float> &input, int N);
 
 #endif
