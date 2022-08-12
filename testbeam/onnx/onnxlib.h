@@ -5,6 +5,10 @@
 
 // This is a stub for some ONNX code refactoring
 
-void onnx(std::string &modelfile, std::vector<float> &input, int N);
+std::vector<float> onnxCombo(std::string &modelfile, std::vector<float> &input, int N);
+
+Ort::Session* onnxSession(std::string &modelfile);
+
+std::vector<float> onnxInference(Ort::Session* session, std::vector<float> &input, int N);
 
 #endif

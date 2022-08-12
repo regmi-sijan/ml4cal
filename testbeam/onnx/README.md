@@ -13,6 +13,8 @@ extraction inference test.
 
 ### ONNX runtime binaries
 
+#### Local build
+
 To make things easier, there is a copy of prefab binaries,
 complete with the original license which makes this procedure
 proper, placed in this folder.
@@ -26,28 +28,41 @@ export LD_LIBRARY_PATH=./onnxruntime-linux-x64-1.11.1/lib
 There is also a script `setup.sh` which can be sourced to set
 this easily.
 
-### Build and Run the test application
+#### Build on SDCC machines
 
-There is a `Makefile` for building the test application. It will
-access the environment variables set as described above. The resulting
-executable is named `onnxtest`.
+Please see `Makefile-sdcc`.
+
+### Test applications
+
+#### The code
+The files `Makefile` and `Makefile-sdcc` can be used for building the test applications.
+There are three:
+
+* `onnxtest`: a simple "Hello World" which does single-input inference, w/o batching
+* `onnxtestN`: evolution of the above, with batch inference for (much) better performance
+* `onnxDriver`: a fully refactored version, with all of ONNX funcitonality wrapped in
+a library (`onnxlib`). The library can be used to easily include ONNX into any application.
+
+The `onnxDriver` can be used as an example of how to integration ONNX into any C++
+application in a simple manner.
+
+An example of the `onnxDriver` run, in which data is read from a ROOT file in the "evaluation"
+format, the model is read from the file `8_ch27.onxx` and the number of entries to run
+inference on is defined as 50:
 
 ```bash
-# An example of the 'onnxtest' run:
- ./onnxtest -v -r  ~/data/evaluationtrees/8gev_2101.root -m ../ch27.onnx -N 50
+./onnxDriver -r ~/data/evaluationtrees/8gev_2101.root -m ../8_ch27.onnx -N 50 -v -o
 ```
 
-The application is using the `lyra` library to parse the command line. For example,
-one can use the `help` option to get information about the CLI:
+All of the applications are using the `lyra` library to parse the command line, making
+the applications self-documented. For example, one can use the `help` option to
+get information about the CLI:
 
 ```bash
-onnxtest --help
+onnxDriver --help
 ```
 
-THe batch mode of the inference process is tested using a modified version of `onnxtext`,
-named `onnxtextN`.
-
-### ONNX Conversion
+### Model Conversion from TensorFlow/Keras to the ONNX format
 
 ```bash
 # Install the module (needs tensorflow installed, too)

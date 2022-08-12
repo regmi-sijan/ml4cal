@@ -1,13 +1,20 @@
-all: onnxtestN
+all: onnxsession.so onnxDriver onnxtestN onnxtest
 
-#onnxtest: onnxtest.C onnxlib.so onnxlib.h onnxutil.h
-#	g++ onnxtest.C ./onnxlib.so $(shell root-config --glibs --cflags --libs) ${OFFLINE_MAIN}/lib64/libonnxruntime.so -o onnxtest
+onnxsession.so: onnxsession.C onnxsession.h
+	g++ onnxsession.C ${OFFLINE_MAIN}/lib64/libonnxruntime.so -fPIC -shared -o onnxsession.so
 
-onnxtestN: onnxtestN.C onnxlib.so onnxlib.h onnxutil.h
-	g++ onnxtestN.C ./onnxlib.so $(shell root-config --glibs --cflags --libs) ${OFFLINE_MAIN}/lib64/libonnxruntime.so -o onnxtestN
+onnxtest: onnxtest.C onnxsession.so onnxsession.h onnxutil.h
+	g++ onnxtest.C ./onnxsession.so $(shell root-config --glibs --cflags --libs) ${OFFLINE_MAIN}/lib64/libonnxruntime.so -o onnxtest
+
+onnxtestN: onnxtestN.C onnxsession.so onnxsession.h onnxutil.h
+	g++ onnxtestN.C ./onnxsession.so $(shell root-config --glibs --cflags --libs) ${OFFLINE_MAIN}/lib64/libonnxruntime.so -o onnxtestN
+
+onnxDriver: onnxDriver.C onnxlib.so onnxlib.h onnxutil.h
+	g++ onnxDriver.C ./onnxlib.so $(shell root-config --glibs --cflags --libs) ${OFFLINE_MAIN}/lib64/libonnxruntime.so -o onnxDriver
 
 onnxlib.so: onnxlib.C onnxlib.h
-	g++ onnxlib.C -fPIC -shared ${OFFLINE_MAIN}/lib64/libonnxruntime.so -o onnxlib.so
+	g++ onnxlib.C ${OFFLINE_MAIN}/lib64/libonnxruntime.so -fPIC -shared -o onnxlib.so
 
 clean:
-	rm onnxtest onnxtestN onnxlib.so
+	rm onnxtest onnxtestN onnxtestDriver onnxlib.so onnxsession.so
+
