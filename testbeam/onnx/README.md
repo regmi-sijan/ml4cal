@@ -43,15 +43,15 @@ There are three:
 * `onnxDriver`: a fully refactored version, with all of ONNX funcitonality wrapped in
 a library (`onnxlib`). The library can be used to easily include ONNX into any application.
 
-The `onnxDriver` can be used as an example of how to integration ONNX into any C++
+The `onnxDriver` can be used as an example of how to integrate ONNX into any C++
 application in a simple manner.
 
 An example of the `onnxDriver` run, in which data is read from a ROOT file in the "evaluation"
-format, the model is read from the file `8_ch27.onxx` and the number of entries to run
-inference on is defined as 50:
+format, the model is read from the file `8_ch27.onxx` located in the local "models" folder -- can
+be anywhere -- and the number of entries to run inference on is defined as 50:
 
 ```bash
-./onnxDriver -r ~/data/evaluationtrees/8gev_2101.root -m ../8_ch27.onnx -N 50 -v -o
+./onnxDriver -r ~/data/evaluationtrees/8gev_2101.root -m models/8_ch27.onnx -N 50 -v -o
 ```
 
 All of the applications are using the `lyra` library to parse the command line, making
@@ -64,6 +64,9 @@ onnxDriver --help
 
 ### Model Conversion from TensorFlow/Keras to the ONNX format
 
+Note that ONNX Python packages are only compatible with Python versions 3.9
+and lower.
+
 ```bash
 # Install the module (needs tensorflow installed, too)
 pip install tf2onnx
@@ -73,7 +76,7 @@ python -m tf2onnx.convert --saved-model ./16_ch27 --output tfmodel.onnx
 ```
 
 There are multiple CLI options that affect the behavior of the conversion module,
-these need to be studied carefully. Caveat -- the names of the NN layers do matter,
+these may need to be studied carefully. Caveat -- the names of the NN layers do matter,
 and they may be affected during the conversion process, so some debugging may be
 in order.
 
