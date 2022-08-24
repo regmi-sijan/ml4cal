@@ -1,46 +1,20 @@
 #!/usr/bin/env python
 '''
-Root to numpy converter (from file to file).
+Root to numpy converter (from many ROOT files to one numpy file).
 
 Read the most recent version of ROOT files with EMCal testbeam,
 produced with "evaluation trees).
 
 NB. The 32nd time bin of the waveform always contains -999 and is useless
-
-Future work: experimenting with uproot3 (extending branches):
-
-import uproot3
-import numpy as np
-
-f = uproot3.recreate("moo.root")
-f['test']=uproot3.newtree({'branch': "int32"})
-f['test'].extend({'branch': np.array([1,2,3])})
-
 '''
-
-t_offset    = 6.17742
-
-template    = None
-vec         = None
-
-
-###
-def tempfit(x, *par):
-    w = x - par[1]
-    return par[0]*np.interp(w, vec, template[:,1], left=0.0, right=0.0) + par[2]
 
 ###################################
 import uproot3
 import numpy as np
-from   numpy import loadtxt
-
-import scipy
-from   scipy.optimize import curve_fit
 
 import argparse
 ###################################
-# Input normalization
-norm    = np.array([4000, 16, 2000])
+
 
 parser  = argparse.ArgumentParser()
 
@@ -86,20 +60,13 @@ total       = 0
 
 for file_in_list in file_list:
     file = uproot3.open(file_in_list)
-
     dir         = file[treename]
     branch      = dir[branchname]
     Nentries    = branch.numentries
-
-    total+=Nentries
-    arrays[i] = branch.array()
-    i+=1
-
+    total       +=Nentries
+    arrays[i]   = branch.array()
+    i           +=1
     if verbose : print(f'''*** Elements in array: {Nentries} ***''') 
-
-    #dims = X.shape
-    #if verbose : print(f'''Read an array: {dims}''')
-
     file.close()
 
 if verbose: print(f'''*** Total {total} ***''')
@@ -107,8 +74,6 @@ if verbose: print(f'''*** Total {total} ***''')
 all_data = np.concatenate(arrays, axis=0)
 dims = all_data.shape
 if verbose : print(f'''Combined array dimensions: {dims}''') 
-
-
 if(outfile == ''): exit(0)
 
 with open(outfile, 'wb') as f:
@@ -122,5 +87,3 @@ with open(outfile, 'wb') as f:
 f.close()
 
 exit(0)
-
-
