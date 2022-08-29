@@ -1,19 +1,21 @@
 # Contents
 
-## Keras
+## Converters and Keras-based training
 
 This folder contains a number of Python scripts to process test beam data.
 Interface with data stored in ROOT files is implemented using the ```uproot``
 package. The following functionality is implemented:
 
-* `root2numpyV3`: read the data, perform a fit, store the result in a numpy-formatted array;
-the fit is currently based on the "template" method but any type of fit can be easily added,
-it was Landau in the prior version; the template data is read from a CSV-formatted file
+* `root2numpyV3`: read the data, perform a fit, store the result in a
+numpy-formatted array; the fit is currently based on the "template" method
+   * the template data is read from a CSV-formatted file
+   * any type of fit can be added (it was Landau in the prior version)
 * `modelV3`: train a Keras model based on data from the previous stage, optionally
 save the model in a file
 * `validatorV3`: perform inference and do regression with respect to a control sample,
 typically different from the training sample
-
+* `rootmerge.py`: collates multiple ROOT files and outputs a numpy-formatted file
+with combined data
 
 All scripts are instrumented with extensive sets of command line options, which can
 be examines using the `--help` option.
@@ -42,7 +44,6 @@ CUDA if available)
 # Change TF log level to remove CUDA and other warnings:
 export TF_CPP_MIN_LOG_LEVEL=3
 ```
-
 
 ## R2 map and channel map
 
