@@ -111,19 +111,17 @@ if verbose:
 
 
 # Translate the template "x" axis
-vec = template[:,0] - t_offset
+vec         = template[:,0] - t_offset
 
-dir     = file[treename]
-branch  = dir[branchname]
-
-Nentries = branch.numentries
+dir         = file[treename]
+branch      = dir[branchname]
+Nentries    = branch.numentries
 
 N=Nentries if entries==0 else min(entries,Nentries)
 
 if verbose: print(f'''Will process {N} entries out of total {Nentries}''')
 
 X = branch.array()
-
 dims = X.shape
 if verbose : print(f'''Read an array: {dims}''')
 
@@ -143,8 +141,9 @@ indices = range(3, 31, 3)
 for i in range(N): # loop over the data sample
     x  = np.linspace(0, 31, 31, endpoint=False) # Keep it here!
     if (verbose and (i %100)==0 and i!=0): print(f'''Processed: {i}  Percentage bad: {float(cnt_bad)/float(i)}''')
-    frame = X[i]
-    wave = frame[channel][0:31]
+
+    frame   = X[i]                  # select a row
+    wave    = frame[channel][0:31]  # select waveform, 31 bin
 
     if args.short:
         wave    = np.take(wave, indices)
@@ -172,12 +171,11 @@ for i in range(N): # loop over the data sample
             cnt_out+=1
             continue
     
+    ped_guess = np.average(wave[0:5])  # ped_guess = 1580 NB. Good guess for channel 27
 
-    # ped_guess = 1580
-    ped_guess = np.average(wave[0:5])
-
- 
+    # -------------------------------------------------------------------------
     # Core fit:
+
     if normalize:
         wave        = wave/nrm
         maxval      = maxval/nrm
@@ -185,20 +183,21 @@ for i in range(N): # loop over the data sample
     
     amp = float(maxval-ped_guess)
 
+
     if amp<threshold:
         cnt_small+=1
-        continue
+        continue # reject small signals
+    
     try:
         popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[amp, float(maxindex), ped_guess], bounds = param_bounds)
     except:
         cnt_bad+=1
         continue
 
-    fit = tempfit(x, *popt)
-
-    ss_res = np.sum((wave - fit) ** 2)              # residual sum of squares
-    ss_tot = np.sum((wave - np.mean(wave)) ** 2)    # total sum of squares
-    r2 = 1 - (ss_res / ss_tot)                      # r-squared
+    fit     = tempfit(x, *popt)
+    ss_res  = np.sum((wave - fit) ** 2)              # residual sum of squares
+    ss_tot  = np.sum((wave - np.mean(wave)) ** 2)    # total sum of squares
+    r2      = 1 - (ss_res / ss_tot)                  # r-squared
 
     # if args.debug: print(str(popt[0])+', '+str(r2))
 
@@ -215,9 +214,6 @@ for i in range(N): # loop over the data sample
     # result      = np.array(popt)   # For two or more extra elements, use this to append: extra = np.array([buzz, r2])
 
     if args.window: popt[1]-=float(maxindex-4) # special case -- offset the wave since it was truncated on the left
-
-    # Experimental:
-    # if normalize:   popt[1] = popt[1]/2.0
 
     result      = np.array(popt)
     appended    = np.append(wave, result)

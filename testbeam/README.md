@@ -74,3 +74,11 @@ position on the face of the calorimeter:
  [48. 49. 50. 51. 52. 53. 54. 55.]
  [56. 57. 58. 59. 60. 61. 62. 63.]]
 ```
+
+The towers that are better populated are:
+
+```
+[[18, 19, 20]
+ [26, 27, 28]
+ [34, 35, 36]]
+```
