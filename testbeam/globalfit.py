@@ -79,6 +79,8 @@ dataset = np.delete(dataset, 31, 2)
 if verbose: print(f'''Truncated input array: {dataset.shape}''')
 
 fit_array   = np.zeros((N, 3))
+waves       = np.zeros((N, 31))
+
 filter      = np.ones(N, dtype=bool)
 
 if verbose: print(f'''Created the output array: {fit_array.shape}''')
@@ -96,7 +98,7 @@ param_bounds=([0.01, 3.0, 0.3],[20.0, 19.0, 2.5])
 # else:
 #    param_bounds=([20.0, 3.0, 1100.0],[14000.0, 25.0, 2400.0])
 
-for i in range(1000): # loop over the data sample
+for i in range(N): # loop over the data sample
     if (verbose and (i %1000)==0 and i!=0): print(f'''Processed: {i}  Percentage bad: {float(cnt_bad)/float(i)}''')
 
     frame   = dataset[i]                  # select a row
@@ -145,17 +147,26 @@ for i in range(1000): # loop over the data sample
             filter[i] = False
             continue
 
-        fit_array[i] = popt
+        fit_array[i]    = popt
+        waves[i]        = wave
 
 
-dataset     = dataset[filter]
+waves       = waves[filter]
 fit_array   = fit_array[filter]
 
-# dataset     = np.append(dataset, fit_array, axis=1)
+output      = np.append(waves, fit_array, axis=1)
 
-print(f'''Filtered array: {dataset.shape}''')
 ################################
 if verbose:
     print(f'''Bad fits counter: {cnt_bad}''')
     print(f'''Below threshold counter: {cnt_small}''')
     if args.peaktime: print(f'''Peak out of bounds counter: {cnt_out} ''')
+    print(f'''Output array: {output.shape}''')
+
+with open(outfile, 'wb') as f:
+    if verbose : print(f'''Saving to uncompressed file {outfile} ''')
+    np.save(f, output)
+
+f.close()
+
+exit(0)
