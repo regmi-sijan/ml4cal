@@ -75,8 +75,8 @@ if verbose: print(f'''Read the input array: {dataset.shape}''')
 
 N = dataset.shape[0]
 
-cut_dataset = np.delete(dataset, 31, 2)
-if verbose: print(f'''Truncated input array: {cut_dataset.shape}''')
+dataset = np.delete(dataset, 31, 2)
+if verbose: print(f'''Truncated input array: {dataset.shape}''')
 
 fit_array   = np.zeros((N, 3))
 filter      = np.ones(N, dtype=bool)
@@ -96,10 +96,10 @@ param_bounds=([0.01, 3.0, 0.3],[20.0, 19.0, 2.5])
 # else:
 #    param_bounds=([20.0, 3.0, 1100.0],[14000.0, 25.0, 2400.0])
 
-for i in range(N): # loop over the data sample
+for i in range(1000): # loop over the data sample
     if (verbose and (i %1000)==0 and i!=0): print(f'''Processed: {i}  Percentage bad: {float(cnt_bad)/float(i)}''')
 
-    frame   = cut_dataset[i]                  # select a row
+    frame   = dataset[i]                  # select a row
     for channel in channels:
         wave        = frame[channel][0:31]  # select waveform, 31 bin
         ped_guess   = np.average(wave[0:5])  # ped_guess = 1580 NB. Good guess for channel 27
@@ -110,6 +110,7 @@ for i in range(N): # loop over the data sample
         if args.peaktime: # strict timing selection
             if maxindex>15 or maxindex<9: # filter out outliers
                 cnt_out+=1
+                filter[i] = False
                 continue
         
 
@@ -122,12 +123,14 @@ for i in range(N): # loop over the data sample
 
         if amp<threshold:
             cnt_small+=1
+            filter[i] = False
             continue # reject small signals
 
         try:
             popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[amp, float(maxindex), ped_guess], bounds = param_bounds)
         except:
             cnt_bad+=1
+            filter[i] = False
             continue
 
         fit     = tempfit(x, *popt)
@@ -139,8 +142,18 @@ for i in range(N): # loop over the data sample
 
         if r2<args.r2:
             cnt_bad+=1
+            filter[i] = False
             continue
 
+        fit_array[i] = popt
+
+
+dataset     = dataset[filter]
+fit_array   = fit_array[filter]
+
+# dataset     = np.append(dataset, fit_array, axis=1)
+
+print(f'''Filtered array: {dataset.shape}''')
 ################################
 if verbose:
     print(f'''Bad fits counter: {cnt_bad}''')
