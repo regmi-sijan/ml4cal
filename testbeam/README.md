@@ -20,6 +20,13 @@ with combined data
 All scripts are instrumented with extensive sets of command line options, which can
 be examines using the `--help` option.
 
+`rootmerge` take a comma-separated list of input files. A helpful line of bash
+code to automate creation of a list based on a wildcard may look like this:
+
+```
+`ls -m 8gev_* | tr -d ' ' | tr -d '\n'`
+```
+
 ## ONNX
 
 ONNX software is maintained in the subfolder `onnx` and documented in the README file
