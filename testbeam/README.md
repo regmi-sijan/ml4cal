@@ -27,12 +27,27 @@ code to automate creation of a list based on a wildcard may look like this:
 `ls -m 8gev_* | tr -d ' ' | tr -d '\n'`
 ```
 
+## Examples of workflows
+
+In the following example, the following takes place:
+* All of the 28GeV `ROOT` files are merged into a single `numpy` file
+* These data is processed to add fitted values, so it can now be used for training
+* A model is built
+* Validation (residuals calculation) takes place
+
+```bash
+./rootmerge.py -i `ls -m ~/data/evaluationtrees/28gev_* | tr -d ' ' | tr -d '\n'` -v -o 28gev.npy
+./globalfit.py -i 28gev.npy -o 28_ch27.npy -v -c '27' -t 0.05 -n 1000.0 -p -r 0.95
+./modelV3.py -i 28_ch27.npy -v -s 28_ch27 -e 16
+./validatorV3.py -d data/8gev_2101_27.npy -m 28_ch27 -v
+```
+
+# Misc
+
 ## ONNX
 
 ONNX software is maintained in the subfolder `onnx` and documented in the README file
 within.
-
-# Misc
 
 ## Vector length
 
