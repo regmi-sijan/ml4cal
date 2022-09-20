@@ -1,33 +1,10 @@
 #!/usr/bin/env python
 '''
-Root to numpy converter (from file to file).
 
-Read the most recent version of ROOT files with EMCal testbeam,
-produced with "evaluation trees).
-
-NB. The 32nd time bin of the waveform always contains -999 and is useless
-
-Future work: experimenting with uproot3 (extending branches):
-
-import uproot3
-import numpy as np
-
-f = uproot3.recreate("moo.root")
-f['test']=uproot3.newtree({'branch': "int32"})
-f['test'].extend({'branch': np.array([1,2,3])})
+Interface to the MC data (photon/gamma)
 
 '''
 
-t_offset    = 6.17742
-
-template    = None
-vec         = None
-
-
-###
-def tempfit(x, *par):
-    w = x - par[1]
-    return par[0]*np.interp(w, vec, template[:,1], left=0.0, right=0.0) + par[2]
 
 ###################################
 import uproot3
@@ -39,8 +16,6 @@ from   scipy.optimize import curve_fit
 
 import argparse
 ###################################
-# Input normalization
-norm    = np.array([4000, 16, 2000])
 
 parser  = argparse.ArgumentParser()
 
@@ -78,11 +53,10 @@ tmplfile    = args.tmplfile
 entries     = args.entries
 verbose     = args.verbose
 
-treename    = 'trainingtree'
-branchname  = 'waveform'
+treename    = 'ttree'
+branch_px   = 'truthpar_px'
 
 channel     = args.channel
-threshold   = args.threshold
 
 normalize   = args.normalize
 nrm         = args.normfactor
@@ -94,156 +68,42 @@ np.set_printoptions(precision=3, linewidth=80)
 if(infile==''):
     print('Please specify a valid input file name')
     exit(-1)
+
+
 file    = uproot3.open(infile)
 
 
-if verbose: print(f'''Will attempt to use the template file "{tmplfile}".''')
-
-try:
-    template = loadtxt(tmplfile, delimiter=',')
-except:
-    print("Problem with reading template file, exiting")
-    exit(-1)
-
-if verbose:
-    print(f'''Template dimensions: {template.shape}''')
-    print(f'''Opened file "{infile}", will use tree "{treename}"''')
+if verbose: print(f'''Opened the file "{infile}".''')
 
 
-# Translate the template "x" axis
-vec         = template[:,0] - t_offset
 
 dir         = file[treename]
-branch      = dir[branchname]
-Nentries    = branch.numentries
+px_branch   = dir['truthpar_px']
+Nentries    = px_branch.numentries
 
 N=Nentries if entries==0 else min(entries,Nentries)
 
 if verbose: print(f'''Will process {N} entries out of total {Nentries}''')
 
-X = branch.array()
+
+m_branch    = dir["sectorem"]
+en_branch   = dir["emcalen"]
+et_branch   = dir["emcalet"]
+ph_branch   = dir["emcalph"]
+
+X = px_branch.array()
+M = m_branch.array()
+EN= en_branch.array()
+ET= et_branch.array()
+PH= ph_branch.array()
+
 dims = X.shape
 if verbose : print(f'''Read an array: {dims}''')
 
-x  = np.linspace(0, 31, 31, endpoint=False)
 
-cnt_bad, cnt_out, cnt_small, first, output_array = 0, 0, 0, True, None
-
-if normalize:
-    param_bounds=([0.01, 3.0, 0.3],[10.0, 19.0, 2.5])
-else:
-    param_bounds=([20.0, 3.0, 1100.0],[14000.0, 25.0, 2400.0])
-
-
-
-indices = range(3, 31, 3)
-
-for i in range(N): # loop over the data sample
-    x  = np.linspace(0, 31, 31, endpoint=False) # Keep it here!
-    if (verbose and (i %100)==0 and i!=0): print(f'''Processed: {i}  Percentage bad: {float(cnt_bad)/float(i)}''')
-
-    frame   = X[i]                  # select a row
-    wave    = frame[channel][0:31]  # select waveform, 31 bin
-
-    if args.short:
-        wave    = np.take(wave, indices)
-        x       = np.arange(3, 31, 3)
-
-
-    maxindex    =   np.argmax(wave)
-    maxval      =   wave[maxindex]
-    
-    if args.short: maxindex = x[maxindex]
-
-    if args.window:
-        if maxindex>25 or maxindex<5: # filter out outliers
-            cnt_out+=1
-            continue
-
-        selection   = np.arange(maxindex-4, maxindex+6)
-        maxindex    = x[maxindex]
-        wave        = np.take(wave, selection)
-        x           = selection
-
-
-    if args.peaktime: # strict timing selection
-        if maxindex>15 or maxindex<9: # filter out outliers
-            cnt_out+=1
-            continue
-    
-    ped_guess = np.average(wave[0:5])  # ped_guess = 1580 NB. Good guess for channel 27
-
-    # -------------------------------------------------------------------------
-    # Core fit:
-
-    if normalize:
-        wave        = wave/nrm
-        maxval      = maxval/nrm
-        ped_guess   = ped_guess/nrm
-    
-    amp = float(maxval-ped_guess)
-
-
-    if amp<threshold:
-        cnt_small+=1
-        continue # reject small signals
-    
-    try:
-        popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[amp, float(maxindex), ped_guess], bounds = param_bounds)
-    except:
-        cnt_bad+=1
-        continue
-
-    fit     = tempfit(x, *popt)
-    ss_res  = np.sum((wave - fit) ** 2)              # residual sum of squares
-    ss_tot  = np.sum((wave - np.mean(wave)) ** 2)    # total sum of squares
-    r2      = 1 - (ss_res / ss_tot)                  # r-squared
-
-    # if args.debug: print(str(popt[0])+', '+str(r2))
-
-    if r2<args.r2:
-        cnt_bad+=1
-        continue
-
-
-    if args.debug: print(popt[1]-maxindex)
-    
-    # Keep this as an option, for later... buzz = np.std(wave-fit)
-
-    # adding the "Y" vector: origin, peak value, pedestal, r2
-    # result      = np.array(popt)   # For two or more extra elements, use this to append: extra = np.array([buzz, r2])
-
-    if args.window: popt[1]-=float(maxindex-4) # special case -- offset the wave since it was truncated on the left
-
-    result      = np.array(popt)
-    appended    = np.append(wave, result)
-
-    if first:
-        output_array = np.array([appended])
-        first = False
-    else:
-        output_array = np.append(output_array,[appended], axis=0)
-
-if verbose:
-    print(f'''Bad fits counter: {cnt_bad}''')
-    print(f'''Below threshold counter: {cnt_small}''')
-    if args.window or args.peaktime: print(f'''Peak out of bounds counter: {cnt_out} ''')
-    try:
-        print(f'''Created an output array: {output_array.shape}''')
-    except:
-        print("There is a problem with the output array")
-
-if(outfile == ''): exit(0)
-
-with open(outfile, 'wb') as f:
-    if(args.zip):
-        if verbose : print(f'''Saving to compressed file {outfile} ''')
-        np.savez_compressed(f, output_array)
-    else:
-        if verbose : print(f'''Saving to uncompressed file {outfile} ''')
-        np.save(f, output_array)
-
-f.close()
+for i in range(10): # loop over the data sample
+    print(M[i])
+    print(EN[i], ET[i], PH[i])
 
 exit(0)
 
