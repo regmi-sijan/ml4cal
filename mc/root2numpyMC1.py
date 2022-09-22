@@ -53,9 +53,6 @@ tmplfile    = args.tmplfile
 entries     = args.entries
 verbose     = args.verbose
 
-treename    = 'ttree'
-branch_px   = 'truthpar_px'
-
 channel     = args.channel
 
 normalize   = args.normalize
@@ -77,33 +74,40 @@ if verbose: print(f'''Opened the file "{infile}".''')
 
 
 
-dir         = file[treename]
-px_branch   = dir['truthpar_px']
-Nentries    = px_branch.numentries
+dir         = file['ttree']
+p_branch    = dir['p']
+Nentries    = p_branch.numentries
 
 N=Nentries if entries==0 else min(entries,Nentries)
 
 if verbose: print(f'''Will process {N} entries out of total {Nentries}''')
 
 
-m_branch    = dir["sectorem"]
-en_branch   = dir["emcalen"]
-et_branch   = dir["emcalet"]
-ph_branch   = dir["emcalph"]
+N_branch        = dir["N"]
+nlive_branch    = dir["nlive"]
+p_branch        = dir["p"]
+energy_branch   = dir["energy"]
 
-X = px_branch.array()
-M = m_branch.array()
-EN= en_branch.array()
-ET= et_branch.array()
-PH= ph_branch.array()
+N       = N_branch.array()
+nlive   = nlive_branch.array()
+p       = p_branch.array()
+energy  = energy_branch.array()
 
-dims = X.shape
+dims = N.shape
 if verbose : print(f'''Read an array: {dims}''')
 
+print(energy.shape)
 
-for i in range(10): # loop over the data sample
-    print(M[i])
-    print(EN[i], ET[i], PH[i])
+for i in range(20): # loop over the data sample
+    ntowers = nlive[i]
+    e = energy[i]
+
+    en = 0.0
+    for nt in range(ntowers):
+        en+=e[nt]
+
+    print(en)
+
 
 exit(0)
 
