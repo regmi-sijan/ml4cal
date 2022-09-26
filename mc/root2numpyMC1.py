@@ -49,6 +49,8 @@ parser.add_argument("-N", "--entries",  type=int,   help="Number of entries",   
 parser.add_argument("-L", "--eta_lo",   type=float, help="low eta cut",         default=0.024)
 parser.add_argument("-H", "--eta_hi",   type=float, help="high eta cut",        default=1.1)
 
+parser.add_argument("-t", "--truth",    action='store_true',    help="Toggle 1/0 for MC truth")
+
 parser.add_argument("-v", "--verbose",  action='store_true',    help="Verbose mode")
 parser.add_argument("-z", "--zip",      action='store_true',    help="Store compressed")
 
@@ -62,6 +64,7 @@ outfile     = args.outfile
 
 entries     = args.entries
 verbose     = args.verbose
+truth       = args.truth
 
 eta_lo      = args.eta_lo
 eta_hi      = args.eta_hi
@@ -144,10 +147,17 @@ for i in range(N2do): # loop over the data sample
     cnt+=1
 
 
-#print(output, output.shape)
-print(cnt, cnt_sq)
-np.random.shuffle(output)
-#print(output)
+# print(output, output.shape)
+# print(cnt, cnt_sq)
+
+# np.random.shuffle(output)
+
+if truth:
+    truth_info = np.ones((cnt,1))
+else:
+    truth_info = np.zeros((cnt,1))
+
+output  = np.hstack((output,truth_info))
 
 if outfile == '': exit(0)
 
@@ -158,7 +168,9 @@ with open(outfile, 'wb') as f:
     else:
         if verbose : print(f'''Saving to uncompressed file {outfile} ''')
         np.save(f, output)
-    
+
+if verbose : print(f'''Save the array: {output.shape}''')
+
 exit(0)
 
 
