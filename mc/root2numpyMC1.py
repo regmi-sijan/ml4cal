@@ -11,34 +11,46 @@ import uproot3
 import numpy as np
 from   numpy import loadtxt
 
-import scipy
-from   scipy.optimize import curve_fit
+import math
 
 import argparse
 ###################################
+
+Neta    = 96
+Nphi    = 256
+shape   = (Neta, Nphi)
+
+Ntotal = shape[0]*shape[1]
+
+tower_map = np.zeros((Ntotal,2), dtype=int)
+
+
+for n in range(Ntotal):
+    eta = n // Nphi
+    phi = n %  Nphi
+    tower_map[n] =  [eta, phi]
+
+###
+def pseudorap(p):
+    pTot = math.sqrt(p[0]**2+p[1]**2+p[2]**2)
+    return math.atanh(p[2]/pTot)
+
+###
+
+
 
 parser  = argparse.ArgumentParser()
 
 parser.add_argument("-i", "--infile",   type=str,   help="Input ROOT file",     default='')
 parser.add_argument("-o", "--outfile",  type=str,   help="Output numpy file",   default='')
 
-parser.add_argument("-T", "--tmplfile", type=str,   help="Fit template file",   default='template.csv')
-
 parser.add_argument("-N", "--entries",  type=int,   help="Number of entries",   default=0)
-parser.add_argument("-c", "--channel",  type=int,   help="Channel",             default=0)
 
-
-parser.add_argument("-t", "--threshold",type=float, help="threshold",           default=0.0)
-parser.add_argument("-r", "--r2",       type=float, help="R2 threshold",        default=0.0)
-
-parser.add_argument("-f", "--normfactor", type=float, help="Normalization factor",default=1.0)
+parser.add_argument("-L", "--eta_lo",   type=float, help="low eta cut",         default=0.024)
+parser.add_argument("-H", "--eta_hi",   type=float, help="high eta cut",        default=1.1)
 
 parser.add_argument("-v", "--verbose",  action='store_true',    help="Verbose mode")
 parser.add_argument("-z", "--zip",      action='store_true',    help="Store compressed")
-parser.add_argument("-s", "--short",    action='store_true',    help="Shorten the waveform (downsample)")
-parser.add_argument("-w", "--window",   action='store_true',    help="Narrow window the waveform")
-parser.add_argument("-n", "--normalize",action='store_true',    help="Normalize input")
-parser.add_argument("-p", "--peaktime", action='store_true',    help="Strict cut on peak time")
 
 parser.add_argument("-d", "--debug",    action='store_true',    help="Debug mode")
 
@@ -48,15 +60,11 @@ args        = parser.parse_args()
 infile      = args.infile
 outfile     = args.outfile
 
-tmplfile    = args.tmplfile
-
 entries     = args.entries
 verbose     = args.verbose
 
-channel     = args.channel
-
-normalize   = args.normalize
-nrm         = args.normfactor
+eta_lo      = args.eta_lo
+eta_hi      = args.eta_hi
 
 #####################################
 
@@ -78,9 +86,9 @@ dir         = file['ttree']
 p_branch    = dir['p']
 Nentries    = p_branch.numentries
 
-N=Nentries if entries==0 else min(entries,Nentries)
+N2do=Nentries if entries==0 else min(entries,Nentries)
 
-if verbose: print(f'''Will process {N} entries out of total {Nentries}''')
+if verbose: print(f'''Will process {N2do} entries out of {Nentries}, eta cut: {eta_lo}, {eta_hi}. Total EMCal channels: {Ntotal}.''')
 
 
 N_branch        = dir["N"]
@@ -96,19 +104,61 @@ energy  = energy_branch.array()
 dims = N.shape
 if verbose : print(f'''Read an array: {dims}''')
 
-print(energy.shape)
+(cnt, cnt_sq, square) = (0, 0, 5)
 
-for i in range(20): # loop over the data sample
+output  = None
+first   = True
+
+for i in range(N2do): # loop over the data sample
+    etarap = abs(pseudorap(p[i]))
+    if etarap < eta_lo or etarap > eta_hi: continue
+
+    barrel = np.zeros(shape, dtype=float)
     ntowers = nlive[i]
-    e = energy[i]
 
-    en = 0.0
     for nt in range(ntowers):
-        en+=e[nt]
+        tower  = N[i][nt]    # print(myTower, e[nt])
 
-    print(en)
+        my_eta = tower_map[tower][0]
+        my_phi = tower_map[tower][1]
+        barrel[my_eta][my_phi] = energy[i][nt]
+
+    maxval      = barrel.max()
+
+    indices     = np.where(barrel == maxval)
+
+    eta, phi = (indices[0][0], indices[1][0])
+
+    if (eta+1)<square or (eta+1)>(Neta-square) or (phi+1)<square or (phi+1)>(Nphi-square):
+        cnt_sq+=1
+        continue
+
+    AOI = barrel[eta-2:eta+3, phi-2:phi+3]
+    
+    if first:
+        output = [AOI.flatten()]
+        first = False
+    else:
+        output = np.vstack((output, [AOI.flatten()]))
+    
+    cnt+=1
 
 
+#print(output, output.shape)
+print(cnt, cnt_sq)
+np.random.shuffle(output)
+#print(output)
+
+if outfile == '': exit(0)
+
+with open(outfile, 'wb') as f:
+    if(args.zip):
+        if verbose : print(f'''Saving to compressed file {outfile} ''')
+        np.savez_compressed(f, X=output)
+    else:
+        if verbose : print(f'''Saving to uncompressed file {outfile} ''')
+        np.save(f, output)
+    
 exit(0)
 
 
