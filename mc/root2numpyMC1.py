@@ -50,6 +50,7 @@ parser.add_argument("-L", "--eta_lo",   type=float, help="low eta cut",         
 parser.add_argument("-H", "--eta_hi",   type=float, help="high eta cut",        default=1.1)
 
 parser.add_argument("-t", "--truth",    action='store_true',    help="Toggle 1/0 for MC truth")
+parser.add_argument("-p", "--part",     action='store_true',    help="1st (true) or 2nd (false) part of data")
 
 parser.add_argument("-v", "--verbose",  action='store_true',    help="Verbose mode")
 parser.add_argument("-z", "--zip",      action='store_true',    help="Store compressed")
@@ -65,6 +66,8 @@ outfile     = args.outfile
 entries     = args.entries
 verbose     = args.verbose
 truth       = args.truth
+
+part       = args.part
 
 eta_lo      = args.eta_lo
 eta_hi      = args.eta_hi
@@ -158,6 +161,15 @@ else:
     truth_info = np.zeros((cnt,1))
 
 output  = np.hstack((output,truth_info))
+
+
+to_keep = int(output.shape[0]/2)
+if part:
+    output = output[0:to_keep,:]
+else:
+    output = output[to_keep:2*to_keep,:]
+
+print(output.shape)
 
 if outfile == '': exit(0)
 
