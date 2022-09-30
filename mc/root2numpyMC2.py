@@ -198,9 +198,7 @@ for i in range(N2do): # loop over the data sample
         cnt_sq+=1
         continue
 
-    AOI = barrel[eta-2:eta+3, phi-2:phi+3]
-    
-    print(AOI)
+    AOI = barrel[eta-2:eta+3, phi-2:phi+3] # print(AOI)
 
     if first:
         output = [AOI.flatten()]
@@ -210,14 +208,9 @@ for i in range(N2do): # loop over the data sample
     
     cnt+=1
 
+### Done with the data, now augment and save output
 
-exit(0)
-
-
-# print(output, output.shape)
-# print(cnt, cnt_sq)
-
-# np.random.shuffle(output)
+if verbose : print(f'''Events passed processing: {cnt} ''')
 
 if truth:
     truth_info = np.ones((cnt,1))
@@ -233,7 +226,7 @@ if part:
 else:
     output = output[to_keep:2*to_keep,:]
 
-print(output.shape)
+if verbose : print(f'''Output array: {output.shape}, first half: {part} ''')
 
 if outfile == '': exit(0)
 

@@ -7,8 +7,8 @@ from keras.layers import Dense
 
 # load the datasets
 
-gamma_file  = 'gamma1_lo.npy'
-pi0_file    = 'pi01_lo.npy'
+gamma_file  = 'gamma1_old.npy'
+pi0_file    = 'pi01_old.npy'
 
 verbose = True
 
@@ -47,6 +47,6 @@ model.fit(X, y, epochs=50, batch_size=10)
 _, accuracy = model.evaluate(X, y)
 print('Accuracy: %.2f' % (accuracy*100))
 
-model.save('model_lo')
+model.save('model_old')
 
 exit(0)
