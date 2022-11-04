@@ -16,4 +16,4 @@ onnxlib.so: onnxlib.C onnxlib.h
 	g++ onnxlib.C -L ./onnxruntime-linux-x64-1.11.1/lib -lonnxruntime -fPIC -shared -o onnxlib.so
 
 clean:
-	rm onnxtest onnxtestN onnxtestDriver onnxlib.so onnxsession.so
+	rm -f onnxtest onnxtestN onnxDriver onnxlib.so onnxsession.so

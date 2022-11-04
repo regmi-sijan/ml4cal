@@ -32,7 +32,7 @@ parser.add_argument("-s", "--save",         type=str,	            help="If set, 
 
 parser.add_argument("-b", "--batch",        type=int,               help="Batch size for inference", default=32)
 
-parser.add_argument("-a", "--amp",          type=float, help="gain (guess)",        default=500.0)
+parser.add_argument("-t", "--threshold",    type=float,             help="threshold",   default=0.5)
 
 # parser.add_argument("-T", "--timing",       action='store_true',	help="Time the model")
 
@@ -48,7 +48,7 @@ batch       = args.batch
 verbose     = args.verbose
 inspect     = args.inspect
 
-gain        = args.amp
+threshold   = args.threshold
 ################################################################
 
 np.set_printoptions(precision=2, linewidth=80)
@@ -111,7 +111,7 @@ print(np.average(answer), np.average(diff))
 cnt = 0
 
 for a in answer:
-    if a>0.5: cnt+=1
+    if a>threshold: cnt+=1
 
 print(cnt/len(answer))
 #for i in range(0,3):

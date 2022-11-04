@@ -31,6 +31,7 @@ int main(int argc, char* argv[]) {
     bool help               = false;
     bool verbose            = false;
     bool output             = false;
+    bool inspect            = false;
 
     int N                   = 0;
     int channel             = 27;
@@ -40,7 +41,8 @@ int main(int argc, char* argv[]) {
 
     auto cli = lyra::cli()
         | lyra::opt(verbose)                ["-v"]["--verbose"] ("Verbose mode")
-        | lyra::opt(output)                 ["-o"]["--output"]  ("Print inference output")            
+        | lyra::opt(output)                 ["-o"]["--output"]  ("Print inference output")
+        | lyra::opt(inspect)                ["-i"]["--inspect"] ("Inspect")        
         | lyra::opt(modelfile, "model" )    ["-m"]["--model"]   ("File containing the ONNX model")
         | lyra::opt(rootfile, "root" )      ["-r"]["--root"]    ("ROOT file to be read")
         | lyra::opt(N, "N")                 ["-N"]["--Nentries"]("Number of entries to process")                        
@@ -67,8 +69,11 @@ int main(int argc, char* argv[]) {
     TBranch *branch     = tree->GetBranch("waveform");
 
     Int_t waveform[64][32];
+
     branch->SetAddress(&waveform);      // will read into this array
+
     Long64_t n = branch->GetEntries();  // number of entries in the branch
+
     if( N==0 || N>n ) { N=n; }          // decide how many to process, 0=all
     if(verbose) { std::cout << "*** Number of entries in the file: " << n << ", Number of entries to be processed: " << N << std::endl; }
 
@@ -76,6 +81,12 @@ int main(int argc, char* argv[]) {
         Int_t m = branch->GetEntry(i);
         std::vector<int> inp;
         inp.insert(inp.begin(), std::begin(waveform[channel]), std::end(waveform[channel]));
+
+        // in the following line we truncate the 32th element of the array
+
+        if(inspect) {
+            cout << inp <<endl;
+        }
         std::transform(inp.begin(), inp.end()-1, w31.begin(), [](int x) {return ((float)x)/1000.0;});
         input.insert(input.end(), w31.begin(), w31.end());
     }
