@@ -2,19 +2,10 @@
 '''
 Root to numpy converter (from file to file).
 
-Read the most recent version of ROOT files with EMCal testbeam,
-produced with "evaluation trees).
-
+Read the most recent version of ROOT files with EMCal testbeam - "evaluation trees".
 NB. The 32nd time bin of the waveform always contains -999 and is useless
 
-Future work: experimenting with uproot3 (extending branches):
-
-import uproot3
-import numpy as np
-
-f = uproot3.recreate("moo.root")
-f['test']=uproot3.newtree({'branch': "int32"})
-f['test'].extend({'branch': np.array([1,2,3])})
+Well populated channels: (18, 19, 20, 26, 27, 28, 34, 35, 36)
 
 '''
 
@@ -22,7 +13,6 @@ t_offset    = 6.17742
 
 template    = None
 vec         = None
-
 
 ###
 def tempfit(x, *par):
@@ -56,7 +46,7 @@ parser.add_argument("-c", "--channel",  type=int,   help="Channel",             
 parser.add_argument("-t", "--threshold",type=float, help="threshold",           default=0.0)
 parser.add_argument("-r", "--r2",       type=float, help="R2 threshold",        default=0.0)
 
-parser.add_argument("-f", "--normfactor", type=float, help="Normalization factor",default=1.0)
+parser.add_argument("-f", "--nrmfactor",type=float, help="Norm. factor",        default=1.0)
 
 parser.add_argument("-v", "--verbose",  action='store_true',    help="Verbose mode")
 parser.add_argument("-z", "--zip",      action='store_true',    help="Store compressed")
@@ -85,7 +75,7 @@ channel     = args.channel
 threshold   = args.threshold
 
 normalize   = args.normalize
-nrm         = args.normfactor
+nrm         = args.nrmfactor
 
 #####################################
 
@@ -250,8 +240,16 @@ exit(0)
 
 ####################################################
 ### -- attic --
-# Well populated channels:
-# selected = (18, 19, 20, 26, 27, 28, 34, 35, 36)
+# Future work: experimenting with uproot3 (extending branches):
+
+# import uproot3
+# import numpy as np
+
+# f = uproot3.recreate("moo.root")
+# f['test']=uproot3.newtree({'branch': "int32"})
+# f['test'].extend({'branch': np.array([1,2,3])})
+
+
 #
 # print(np.reshape(output_array, (-1,34)))
 
@@ -259,3 +257,6 @@ exit(0)
 # f = uproot.recreate(outfile)
 # f['test']=uproot.newtree({'branch': np.array([1,2,3])})
 # dir.extend({'branch': np.array([1,2,3])})
+
+
+

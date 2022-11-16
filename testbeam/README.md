@@ -6,10 +6,12 @@ This folder contains a number of Python scripts to process test beam data.
 Interface with data stored in ROOT files is implemented using the ```uproot``
 package. The following functionality is implemented:
 
-* `root2numpyV3`: read the data, perform a fit, store the result in a
-numpy-formatted array; the fit is currently based on the "template" method
-   * the template data is read from a CSV-formatted file
-   * any type of fit can be added (it was Landau in the prior version)
+* `root2numpyV3`: read the data, perform a fit, store the result in a numpy-formatted array
+   * the fit is currently based on the "template" method, however any type of fit can be added (it was Landau in the prior version)
+   * the template data is read from a CSV-formatted file, and can be specified as a command-line option (default `template.csv`)
+   * this is the most up-to-date version of the converter
+   * the `short` command line option -- which if effectively downsampling -- is deprecated, as previous attempts at straight downsampling produced inferior results
+
 * `modelV3`: train a Keras model based on data from the previous stage, optionally
 save the model in a file
 * `validatorV3`: perform inference and do regression with respect to a control sample,

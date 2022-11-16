@@ -78,15 +78,14 @@ int main(int argc, char* argv[]) {
     if(verbose) { std::cout << "*** Number of entries in the file: " << n << ", Number of entries to be processed: " << N << std::endl; }
 
     for (int i=0; i<N; i++) {
+    
         Int_t m = branch->GetEntry(i);
         std::vector<int> inp;
         inp.insert(inp.begin(), std::begin(waveform[channel]), std::end(waveform[channel]));
 
-        // in the following line we truncate the 32th element of the array
+        if(inspect) {cout << inp <<endl;}
 
-        if(inspect) {
-            cout << inp <<endl;
-        }
+        // in the following line we truncate the 32th element of the array
         std::transform(inp.begin(), inp.end()-1, w31.begin(), [](int x) {return ((float)x)/1000.0;});
         input.insert(input.end(), w31.begin(), w31.end());
     }
@@ -95,14 +94,17 @@ int main(int argc, char* argv[]) {
 
     // Core inference
     Ort::Session* s = onnxSession(modelfile);
-    std::vector<float> result = onnxInference(s, input, N);
+    //+ std::vector<float> result = onnxInference(s, input, N);
 
-    for (int i=0; i<N*3; i=i+3) {
-        for (int k=0; k<3; k++) {std::cout << result[i+k] << " ";}
-        std::cout << std::endl;
+
+    if(output) {
+        for (int i=0; i<N*3; i=i+3) {
+            //+ for (int k=0; k<3; k++) {std::cout << result[i+k] << " ";}
+            std::cout << std::endl;
+        }
     }
 
-    delete s;
+    //+ delete s;
 
     exit(0);
 }
