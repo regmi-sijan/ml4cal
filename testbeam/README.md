@@ -1,29 +1,49 @@
 # Contents
 
+## TF Debug Level
+
+A few scripts in this suite depend on `Keras/TensorFlow`.
+This package will issue warnings about missing CUDA libraries at runtime.
+To avoid warning messages one can set the debug level to 3 (or alternatively
+install CUDA if available)
+
+```bash
+# Change TF log level to 3, to remove CUDA and other warnings:
+export TF_CPP_MIN_LOG_LEVEL=3
+```
+
 ## Converters and Keras-based training
 
 This folder contains a number of Python scripts to process test beam data.
-Interface with data stored in ROOT files is implemented using the ```uproot``
+Interface with data stored in ROOT files is implemented using the `uproot`
 package. The following functionality is implemented:
 
 * `root2numpyV3`: read the data, perform a fit, store the result in a numpy-formatted array
    * the fit is currently based on the "template" method, however any type of fit can be added (it was Landau in the prior version)
    * the template data is read from a CSV-formatted file, and can be specified as a command-line option (default `template.csv`)
    * this is the most up-to-date version of the converter
-   * the `short` command line option -- which if effectively downsampling -- is deprecated, as previous attempts at straight downsampling produced inferior results
+   * the `--short` command line option -- which if effectively downsampling -- is deprecated, as previous attempts at straight downsampling produced inferior results
 
 * `modelV3`: train a Keras model based on data from the previous stage, optionally
 save the model in a file
+
 * `validatorV3`: perform inference and do regression with respect to a control sample,
 typically different from the training sample
+
 * `rootmerge.py`: collates multiple ROOT files and outputs a numpy-formatted file
 with combined data
 
-All scripts are instrumented with extensive sets of command line options, which can
+* `rootmerge` take a comma-separated list of ROOT input files and merges them into a single numpy file
+
+
+---
+
+All scripts are instrumented with command line options (some with extensive sets.), which can
 be examines using the `--help` option.
 
-`rootmerge` take a comma-separated list of input files. A helpful line of bash
-code to automate creation of a list based on a wildcard may look like this:
+
+For `rootmerge`, a helpful line of bash code to automate creation of a list of ROOT file based
+on a wildcard may look like this:
 
 ```
 `ls -m 8gev_* | tr -d ' ' | tr -d '\n'`
@@ -32,9 +52,13 @@ code to automate creation of a list based on a wildcard may look like this:
 ## Examples of workflows
 
 In the following example, the following takes place:
+
 * All of the 28GeV `ROOT` files are merged into a single `numpy` file
+
 * These data is processed to add fitted values, so it can now be used for training
+
 * A model is built
+
 * Validation (residuals calculation) takes place
 
 ```bash
@@ -57,17 +81,6 @@ In a few places in the code the length of the input array (the waveform) is hard
 to 31 for simplicity, reflecting the layout of the test beam data.
 This is easy to spot and is configurable in most cases.
 
-
-## TF Debug Level
-
-Keras/TF will complain about missing CUDA libraries, to avoid
-this one can set the debug level to 3 (or alternatively install
-CUDA if available)
-
-```bash
-# Change TF log level to remove CUDA and other warnings:
-export TF_CPP_MIN_LOG_LEVEL=3
-```
 
 ## R2 map and channel map
 
