@@ -18,10 +18,9 @@ This folder contains a number of Python scripts to process test beam data.
 Interface with data stored in ROOT files is implemented using the `uproot`
 package. The following functionality is implemented:
 
-* `root2numpyV3`: read the data, perform a fit, store the result in a numpy-formatted array
+* `root2numpyV3`: read the data from a single ROOT file, perform a fit, store the result in a numpy-formatted array
    * the fit is currently based on the "template" method, however any type of fit can be added (it was Landau in the prior version)
    * the template data is read from a CSV-formatted file, and can be specified as a command-line option (default `template.csv`)
-   * this is the most up-to-date version of the converter
    * the `--short` command line option -- which if effectively downsampling -- is deprecated, as previous attempts at straight downsampling produced inferior results
 
 * `modelV3`: train a Keras model based on data from the previous stage, optionally
@@ -30,10 +29,10 @@ save the model in a file
 * `validatorV3`: perform inference and do regression with respect to a control sample,
 typically different from the training sample
 
-* `rootmerge.py`: collates multiple ROOT files and outputs a numpy-formatted file
-with combined data
-
-* `rootmerge` take a comma-separated list of ROOT input files and merges them into a single numpy file
+* `rootmerge`: collates multiple ROOT files and outputs a numpy-formatted file
+with combined data; it takes a comma-separated list of ROOT input files with its `-i` option
+and merges them into a single numpy file; typically this output is intended for further processing
+by `globalfit` (see below)
 
 
 ---
@@ -67,6 +66,15 @@ In the following example, the following takes place:
 ./modelV3.py -i 28_ch27.npy -v -s 28_ch27 -e 16
 ./validatorV3.py -d data/8gev_2101_27.npy -m 28_ch27 -v
 ```
+
+When processing single files, the original (somewhat obsolete but functional) version of the workflow
+can be used, similar to above:
+
+* `root2numpyV3` - produces a single numpy-formatted file, with augmented results of the fit included
+* `modelV3`: train a Keras model
+* `validatorV3`: perform inference and determine the model's performance
+
+
 
 # Misc
 

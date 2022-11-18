@@ -5,6 +5,10 @@ Root to numpy converter (from many ROOT files to one numpy file).
 Read the most recent version of ROOT files with EMCal testbeam,
 produced with "evaluation trees).
 
+
+Note preallocation of numpy arrays which allows to use concatenation
+of all arrays in one go, which is more efficient compared to other methods.
+
 NB. The 32nd time bin of the waveform always contains -999 and is useless
 '''
 
@@ -15,11 +19,10 @@ import numpy as np
 import argparse
 ###################################
 
-
 parser  = argparse.ArgumentParser()
 
-parser.add_argument("-i", "--infile",   type=str,   help="List of input ROOT files (comma separated)",     default='')
-parser.add_argument("-o", "--outfile",  type=str,   help="Output numpy file",   default='')
+parser.add_argument("-i", "--infile",   type=str,               help="List of input ROOT files (comma separated)",      default='')
+parser.add_argument("-o", "--outfile",  type=str,               help="Output numpy file",                               default='')
 parser.add_argument("-v", "--verbose",  action='store_true',    help="Verbose mode")
 parser.add_argument("-z", "--zip",      action='store_true',    help="Store compressed")
 
@@ -45,8 +48,8 @@ if(infile==''):
 # Using shell to produce the list of comma-separated inputs:
 # ls -m ~/data/evaluationtrees/8gev_2* | tr -d ' ' | tr -d '\n'
 
-file_list = infile.split(',')
-Nfiles = len(file_list)
+file_list   = infile.split(',')
+Nfiles      = len(file_list)
 
 if verbose:
     print("*** Verbose mode selected ***")
@@ -59,7 +62,7 @@ i           = 0
 total       = 0
 
 for file_in_list in file_list:
-    file = uproot3.open(file_in_list)
+    file        = uproot3.open(file_in_list)
     dir         = file[treename]
     branch      = dir[branchname]
     Nentries    = branch.numentries
@@ -71,8 +74,9 @@ for file_in_list in file_list:
 
 if verbose: print(f'''*** Total {total} ***''')
 
-all_data = np.concatenate(arrays, axis=0)
-dims = all_data.shape
+all_data    = np.concatenate(arrays, axis=0)
+dims        = all_data.shape
+
 if verbose : print(f'''Combined array dimensions: {dims}''') 
 if(outfile == ''): exit(0)
 

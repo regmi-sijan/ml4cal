@@ -7,14 +7,20 @@ NB. The 32nd time bin of the waveform always contains -999 and is useless
 
 Well populated channels: (18, 19, 20, 26, 27, 28, 34, 35, 36)
 
+
+Keep this as an option, for later... buzz = np.std(wave-fit)
+
+In the output, the data (X) is augmented with fit results vector (Y): amplitude, time, pedestal
+
+In some variations of the code, the following was appended to the "result": np.array([buzz, r2])
+
 '''
 
 t_offset    = 6.17742
-
 template    = None
 vec         = None
 
-###
+### Define the fit function
 def tempfit(x, *par):
     w = x - par[1]
     return par[0]*np.interp(w, vec, template[:,1], left=0.0, right=0.0) + par[2]
@@ -28,6 +34,12 @@ import scipy
 from   scipy.optimize import curve_fit
 
 import argparse
+
+
+# ROOT tree access (tags)
+treename    = 'trainingtree'
+branchname  = 'waveform'
+
 ###################################
 # Input normalization
 norm    = np.array([4000, 16, 2000])
@@ -43,7 +55,7 @@ parser.add_argument("-N", "--entries",  type=int,   help="Number of entries",   
 parser.add_argument("-c", "--channel",  type=int,   help="Channel",             default=0)
 
 
-parser.add_argument("-t", "--threshold",type=float, help="threshold",           default=0.0)
+parser.add_argument("-t", "--threshold",type=float, help="Threshold",           default=0.0)
 parser.add_argument("-r", "--r2",       type=float, help="R2 threshold",        default=0.0)
 
 parser.add_argument("-f", "--nrmfactor",type=float, help="Norm. factor",        default=1.0)
@@ -68,8 +80,7 @@ tmplfile    = args.tmplfile
 entries     = args.entries
 verbose     = args.verbose
 
-treename    = 'trainingtree'
-branchname  = 'waveform'
+window      = args.window
 
 channel     = args.channel
 threshold   = args.threshold
@@ -142,13 +153,16 @@ for i in range(N): # loop over the data sample
 
     maxindex    =   np.argmax(wave)
     maxval      =   wave[maxindex]
-    
-    if args.short: maxindex = x[maxindex]
 
-    if args.window:
-        if maxindex>25 or maxindex<5: # filter out outliers
+
+    if args.peaktime: # strict timing selection
+        if maxindex>18 or maxindex<8: # filter out outliers
             cnt_out+=1
             continue
+
+    if args.short: maxindex = x[maxindex] # deprecated
+
+    if window:
 
         selection   = np.arange(maxindex-4, maxindex+6)
         maxindex    = x[maxindex]
@@ -156,11 +170,11 @@ for i in range(N): # loop over the data sample
         x           = selection
 
 
-    if args.peaktime: # strict timing selection
-        if maxindex>15 or maxindex<9: # filter out outliers
-            cnt_out+=1
-            continue
-    
+    if window:
+        ped_guess = np.average(wave[0:2])
+    else:
+        ped_guess = np.average(wave[0:5])
+
     ped_guess = np.average(wave[0:5])  # ped_guess = 1580 NB. Good guess for channel 27
 
     # -------------------------------------------------------------------------
@@ -174,9 +188,9 @@ for i in range(N): # loop over the data sample
     amp = float(maxval-ped_guess)
 
 
-    if amp<threshold:
+    if amp<threshold: # reject small signals
         cnt_small+=1
-        continue # reject small signals
+        continue 
     
     try:
         popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[amp, float(maxindex), ped_guess], bounds = param_bounds)
@@ -191,22 +205,15 @@ for i in range(N): # loop over the data sample
 
     # if args.debug: print(str(popt[0])+', '+str(r2))
 
-    if r2<args.r2:
+    if r2<args.r2: # reject signals with poor R2 metric values
         cnt_bad+=1
         continue
 
-
     if args.debug: print(popt[1]-maxindex)
     
-    # Keep this as an option, for later... buzz = np.std(wave-fit)
+    if window: popt[1]-=float(maxindex-4) # special case -- offset the wave since it was truncated on the left
 
-    # adding the "Y" vector: origin, peak value, pedestal, r2
-    # result      = np.array(popt)   # For two or more extra elements, use this to append: extra = np.array([buzz, r2])
-
-    if args.window: popt[1]-=float(maxindex-4) # special case -- offset the wave since it was truncated on the left
-
-    result      = np.array(popt)
-    appended    = np.append(wave, result)
+    appended    = np.append(wave, np.array(popt))
 
     if first:
         output_array = np.array([appended])
@@ -214,14 +221,14 @@ for i in range(N): # loop over the data sample
     else:
         output_array = np.append(output_array,[appended], axis=0)
 
-if verbose:
-    print(f'''Bad fits counter: {cnt_bad}''')
-    print(f'''Below threshold counter: {cnt_small}''')
-    if args.window or args.peaktime: print(f'''Peak out of bounds counter: {cnt_out} ''')
-    try:
-        print(f'''Created an output array: {output_array.shape}''')
-    except:
-        print("There is a problem with the output array")
+
+try:
+    shp = output_array.shape
+except:
+    print("There is a problem with the output array")
+    exit(-1)
+
+if verbose: print(f'''Bad fits counter: {cnt_bad}\nBelow threshold counter: {cnt_small}\nPeak out of bounds counter: {cnt_out}\nCreated an output array: {shp}''')
 
 if(outfile == ''): exit(0)
 
