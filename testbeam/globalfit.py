@@ -10,12 +10,23 @@ Function:
 Notes:
 * Pay attention to the "window" function, since it affects the fitting etc
 
+
+Recall fit parameters: amplitude, time, pedestal
+
+Good call:
+./globalfit.py -N 100 -p -v -i 28gev.npy -c 27,28 -L 6 -R 10 -n -f 1000.0 -t 0.021 -r 0.8
+
+Remember that if the threshold is not set, some fits will fail
+with exception due to parameters being out of bounds.
+
 '''
 
 import  argparse
 
 import  numpy as np
 import  scipy
+from scipy import optimize
+# from    scipy.optimize import curve_fit
 from    numpy import loadtxt
 
 #################################################
@@ -24,13 +35,12 @@ from    numpy import loadtxt
 t_offset    = 6.17742
 
 template    = None
-vec         = None
+vec         = None # x-coord for the template
 
 ###
 def tempfit(x, *par):
     w = x - par[1]
     return par[0]*np.interp(w, vec, template[:,1], left=0.0, right=0.0) + par[2]
-
 ###
 
 parser  = argparse.ArgumentParser()
@@ -87,7 +97,7 @@ except:
 
 # Translate the template "x" axis
 if verbose: print(f'''Timing correction {t_offset}''')
-vec             = template[:,0] - t_offset
+vec = template[:,0] - t_offset
 
 dataset = None
 try:
@@ -103,28 +113,28 @@ if verbose: print(f'''Read the input array: {dataset.shape}, will process {N} ev
 fit_array   = np.zeros((N, 3))
 if verbose: print(f'''Created the output array: {fit_array.shape}''')
 
-waves       = np.zeros((N, 31)) # recall that the 32nd bin contains a constant, need to exclude it
 filter      = np.full(N, True, dtype=bool) # Was: filter=np.ones(N, dtype=bool)
 
-
-x = np.linspace(0, 31, 31, endpoint=False) # the "original" vector of input bin numbers
 cnt_bad, cnt_out, cnt_small, first, output_array = 0, 0, 0, True, None # misc init
 
-# Auto correction for the window start
+# Auto correction for the window start, and the base vector
 if window:
-    (t_limit_left, t_limit_right) = (2.0, 10.0)
+    (t_limit_left, t_limit_right) = (3.0, 8.0)
+    win_len = left+right
+    x       = np.linspace(0, win_len, win_len, endpoint=False)
+    waves   = np.zeros((N, win_len)) # recall that the 32nd bin contains a constant, need to exclude it
 else:
     (t_limit_left, t_limit_right) = (5.0, 18.0)
-
-
+    x       = np.linspace(0, 31, 31, endpoint=False)
+    waves   = np.zeros((N, 31)) # recall that the 32nd bin contains a constant, need to exclude it
 
 # Recall fit parameters: amplitude, time, pedestal
 
 # -FIXME- factor 1000 implied here
 if normalize:
-    param_bounds=([0.02, t_limit_left, 1.0],   [15.0,    t_limit_right, 2.5])
+    param_bounds=([0.02, t_limit_left, 1.2],   [18.0,    t_limit_right, 2.1])
 else:
-    param_bounds=([20.0, t_limit_left, 1000.0],[15000.0, t_limit_right, 2500.0])
+    param_bounds=([20.0, t_limit_left, 1000.0],[18000.0, t_limit_right, 2500.0])
 
 if verbose: print(f'''Parameter bounds: {param_bounds}''')
 
@@ -147,24 +157,31 @@ for i in range(N): # loop over the data sample
 
         if window:
             selection   = np.arange(maxindex-left, maxindex+right)
-            shortwave   = np.take(wave, selection)
-            print(len(shortwave))
-            continue
+            wave        = np.take(wave, selection)
+            ped_guess   = np.average(wave[0:2])
+            maxindex    = np.argmax(wave)
 
+        
         wave        = wave/nrm
         maxval      = maxval/nrm
         ped_guess   = ped_guess/nrm
 
         amp = float(maxval-ped_guess)
 
+    
+
         if amp<threshold:
             cnt_small+=1
             filter[i] = False
             continue # reject small signals
 
+
+        # print(len(x), len(wave))
+        # print(maxindex, amp, ped_guess)
         try:
             popt, _ = scipy.optimize.curve_fit(tempfit, x, wave, p0=[amp, float(maxindex), ped_guess], bounds = param_bounds)
-        except:
+        except Exception as e:
+            print(amp, float(maxindex), ped_guess)
             cnt_bad+=1
             filter[i] = False
             continue
