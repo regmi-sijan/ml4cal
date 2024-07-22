@@ -108,7 +108,7 @@ int main(int argc, char* argv[]) {
     // Ort::MemoryInfo memoryInfo = Ort::MemoryInfo::CreateCpu(OrtAllocatorType::OrtArenaAllocator, OrtMemType::OrtMemTypeDefault);
 
     for (int i=0; i<N; i++) {
-        Int_t m = branch->GetEntry(i);
+//        Int_t m = branch->GetEntry(i);
         auto start = chrono::high_resolution_clock::now();
 
         std::vector<int> inp;

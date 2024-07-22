@@ -79,7 +79,8 @@ int main(int argc, char* argv[]) {
     }
 
 
-    size_t inputTensorSize = vectorProduct(inputDims), outputTensorSize = vectorProduct(outputDims);
+//    size_t inputTensorSize = vectorProduct(inputDims);
+    size_t outputTensorSize = vectorProduct(outputDims);
 
     // Proceed to read the data from a ROOT tree:
     TFile f(TString(rootfile.c_str()));
@@ -113,7 +114,7 @@ int main(int argc, char* argv[]) {
 
 
     for (int i=0; i<N; i++) {
-        Int_t m = branch->GetEntry(i);
+//        Int_t m = branch->GetEntry(i);
 
         std::vector<int> inp;
         inp.insert(inp.begin(), std::begin(waveform[channel]), std::end(waveform[channel]));

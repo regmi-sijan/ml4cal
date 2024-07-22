@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
 
     for (int i=0; i<N; i++) {
     
-        Int_t m = branch->GetEntry(i);
+//        Int_t m = branch->GetEntry(i);
         std::vector<int> inp;
         inp.insert(inp.begin(), std::begin(waveform[channel]), std::end(waveform[channel]));
 
@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
     if(verbose) {std::cout << "Input size: " << input.size() << std::endl;}
 
     // Core inference
-    Ort::Session* s = onnxSession(modelfile);
+//    Ort::Session* s = onnxSession(modelfile);
     //+ std::vector<float> result = onnxInference(s, input, N);
 
 
